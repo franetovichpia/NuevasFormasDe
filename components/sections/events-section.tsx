@@ -10,10 +10,8 @@ import {
 import { EventGallery } from "@/components/sections/events/event-gallery";
 import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
-import {
-  nfdEvents,
-  type NfdEvent,
-} from "@/data/events";
+import type { NfdEvent } from "@/data/events";
+import { shouldOptimizeImage } from "@/utils/image";
 
 type EventCardProps = {
   event: NfdEvent;
@@ -37,6 +35,11 @@ function EventCard({
             loading="lazy"
             sizes="(max-width: 768px) 100vw, 12rem"
             src={event.coverImage}
+            unoptimized={
+              !shouldOptimizeImage(
+                event.coverImage,
+              )
+            }
           />
         ) : (
           <>
@@ -131,7 +134,7 @@ function EventCard({
           {event.title}
         </h3>
 
-        {isUpcoming ? (
+        {isUpcoming && !event.description ? (
           <p className="mt-3 max-w-xl text-sm leading-7 text-ink/50">
             La información del próximo encuentro será publicada cuando
             estén confirmados sus datos.
@@ -142,7 +145,9 @@ function EventCard({
           <details className="group mt-5 border-t border-ink/10 pt-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl marker:hidden [&::-webkit-details-marker]:hidden">
               <span className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-nfd-blue">
-                Leer propuesta completa
+                {isUpcoming
+                  ? "Leer más"
+                  : "Leer propuesta completa"}
               </span>
 
               <span className="grid size-8 place-items-center rounded-full border border-ink/10 bg-white/60 text-nfd-blue transition-all duration-300 group-open:bg-nfd-blue group-open:text-white">
@@ -156,7 +161,7 @@ function EventCard({
             </summary>
 
             <div className="mt-4 rounded-[1.1rem] border border-ink/10 bg-[#f4efe6]/75 p-5 backdrop-blur-xl sm:p-6">
-              <p className="text-sm leading-8 text-ink/65 sm:text-[0.95rem]">
+              <p className="whitespace-pre-line text-sm leading-8 text-ink/65 sm:text-[0.95rem]">
                 {event.description}
               </p>
             </div>
@@ -182,17 +187,15 @@ function EventCard({
             </a>
           ) : null}
 
-          {!isUpcoming ? (
-            event.gallery.length > 0 ? (
-              <EventGallery
-                eventTitle={event.title}
-                images={event.gallery}
-              />
-            ) : (
-              <span className="inline-flex min-h-9 items-center rounded-full border border-ink/10 bg-white/35 px-4 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ink/35">
-                Fotos pendientes
-              </span>
-            )
+          {event.gallery.length > 0 ? (
+            <EventGallery
+              eventTitle={event.title}
+              images={event.gallery}
+            />
+          ) : !isUpcoming ? (
+            <span className="inline-flex min-h-9 items-center rounded-full border border-ink/10 bg-white/35 px-4 text-[0.52rem] font-semibold uppercase tracking-[0.12em] text-ink/35">
+              Fotos pendientes
+            </span>
           ) : null}
         </div>
       </div>
@@ -200,15 +203,56 @@ function EventCard({
   );
 }
 
-export function EventsSection() {
-  const upcomingEvents = nfdEvents.filter(
-    (event) =>
-      event.status === "upcoming",
+type EventsSectionProps = {
+  events: readonly NfdEvent[];
+};
+
+/**
+ * Ordena por fecha de inicio. Los eventos sin fecha van al final.
+ */
+function sortByStartDate(
+  events: readonly NfdEvent[],
+  direction: "asc" | "desc",
+) {
+  return [...events].sort(
+    (first, second) => {
+      if (!first.startDate) {
+        return second.startDate ? 1 : 0;
+      }
+
+      if (!second.startDate) {
+        return -1;
+      }
+
+      const comparison =
+        first.startDate.localeCompare(
+          second.startDate,
+        );
+
+      return direction === "asc"
+        ? comparison
+        : -comparison;
+    },
+  );
+}
+
+export function EventsSection({
+  events,
+}: EventsSectionProps) {
+  const upcomingEvents = sortByStartDate(
+    events.filter(
+      (event) =>
+        event.status === "upcoming",
+    ),
+    "asc",
   );
 
-  const pastEvents = nfdEvents.filter(
-    (event) =>
-      event.status === "past",
+  const pastEvents = sortByStartDate(
+    events.filter(
+      (event) =>
+        event.status === "past",
+    ),
+    "desc",
   );
 
   return (
@@ -275,7 +319,7 @@ export function EventsSection() {
                       0.05 +
                       index * 0.05
                     }
-                    key={event.slug}
+                    key={event.id}
                   >
                     <EventCard
                       event={event}
@@ -309,7 +353,7 @@ export function EventsSection() {
                       0.05 +
                       index * 0.05
                     }
-                    key={event.slug}
+                    key={event.id}
                   >
                     <EventCard
                       event={event}

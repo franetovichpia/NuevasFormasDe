@@ -2,36 +2,64 @@ export type EventStatus =
   | "upcoming"
   | "past";
 
+/**
+ * Estado de publicación dentro del panel:
+ * - draft: guardado, todavía no visible en el sitio.
+ * - published: visible en el sitio.
+ * - archived: oculto del sitio, se conserva en el panel.
+ */
+export type EventVisibility =
+  | "draft"
+  | "published"
+  | "archived";
+
 export type NfdEvent = {
+  id: string;
   slug: string;
   title: string;
+  /** Texto de fecha que se muestra en la tarjeta. */
   date: string;
+  /** Fechas en formato AAAA-MM-DD, usadas para ordenar y clasificar. */
+  startDate?: string | null;
+  endDate?: string | null;
   location: string | null;
   status: EventStatus;
+  visibility?: EventVisibility;
   coverImage: string | null;
   gallery: readonly string[];
   href: string | null;
   description: string | null;
+  updatedAt?: string;
 };
 
+/**
+ * Contenido inicial. Una vez que se guarda un evento desde
+ * el panel, el sitio usa lo guardado en el almacenamiento.
+ */
 export const nfdEvents: readonly NfdEvent[] = [
   {
+    id: "proximo-encuentro",
     slug: "proximo-encuentro",
     title: "Próximamente",
     date: "Fecha a confirmar",
     location: null,
     status: "upcoming",
+    visibility: "published",
     coverImage: null,
     gallery: [],
     href: null,
     description: null,
   },
   {
+    id: "primera-convencion",
     slug: "primera-convencion",
     title: "Primera Convención",
     date: "24 y 25 de mayo de 2025",
+    startDate: "2025-05-24",
+    endDate: "2025-05-25",
     location: "Quinta de Benavidez, Tigre",
     status: "past",
+    visibility: "published",
     coverImage: null,
     gallery: [],
     href: null,

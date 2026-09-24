@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Montserrat } from "next/font/google";
 
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
-
 import "./globals.css";
 
 const boska = localFont({
@@ -49,11 +46,7 @@ export default function RootLayout({
       <body
         className={`${boska.variable} ${montserrat.variable}`}
       >
-        <SiteHeader />
-
         {children}
-
-        <SiteFooter />
       </body>
     </html>
   );

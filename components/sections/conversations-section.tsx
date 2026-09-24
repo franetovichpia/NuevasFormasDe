@@ -21,16 +21,24 @@ import {
 import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
 import {
-  conversations,
-  type Conversation,
-  type ConversationMedia,
-  type ConversationPlatform,
+  conversationCategories,
+  type ConversationCategory,
+} from "@/data/categories";
+import type {
+  Conversation,
+  ConversationMedia,
+  ConversationPlatform,
 } from "@/data/conversations";
 import { cn } from "@/utils/cn";
+import { shouldOptimizeImage } from "@/utils/image";
 
 type ConversationFilter =
   | "all"
   | ConversationPlatform;
+
+type CategoryFilter =
+  | "all"
+  | ConversationCategory;
 
 type FilterOption = {
   value: ConversationFilter;
@@ -209,6 +217,11 @@ function ConversationCard({
               : "(max-width: 768px) 76vw, 20rem"
           }
           src={cover.image}
+          unoptimized={
+            !shouldOptimizeImage(
+              cover.image,
+            )
+          }
         />
 
         {/* Degradado suave detrás de la franja */}
@@ -262,12 +275,18 @@ function ConversationCard({
                   Con {conversation.guest}
                 </p>
               ) : null}
+
+              {conversation.description ? (
+                <p className="mt-1 line-clamp-2 text-[0.64rem] leading-snug text-ink/45 sm:text-[0.68rem]">
+                  {conversation.description}
+                </p>
+              ) : null}
             </div>
 
             {/* Enlaces */}
             <div className="flex shrink-0 items-center gap-1.5">
               {conversation.media.map(
-                (media) => (
+                (media, mediaIndex) => (
                   <a
                     aria-label={`Abrir ${conversation.title} en ${platformLabels[media.platform]}`}
                     className={cn(
@@ -277,7 +296,7 @@ function ConversationCard({
                       ],
                     )}
                     href={media.href}
-                    key={`${conversation.slug}-${media.platform}`}
+                    key={`${conversation.slug}-${media.platform}-${mediaIndex}`}
                     rel="noreferrer"
                     target="_blank"
                     title={`Abrir en ${platformLabels[media.platform]}`}
@@ -308,27 +327,64 @@ function ConversationCard({
   );
 }
 
-export function ConversationsSection() {
+function matchesPlatform(
+  conversation: Conversation,
+  filter: ConversationFilter,
+) {
+  return (
+    filter === "all" ||
+    conversation.media.some(
+      (media) =>
+        media.platform === filter,
+    )
+  );
+}
+
+function matchesCategory(
+  conversation: Conversation,
+  filter: CategoryFilter,
+) {
+  return (
+    filter === "all" ||
+    (conversation.categories ?? []).includes(
+      filter,
+    )
+  );
+}
+
+type ConversationsSectionProps = {
+  conversations: readonly Conversation[];
+};
+
+export function ConversationsSection({
+  conversations,
+}: ConversationsSectionProps) {
   const carouselRef =
     useRef<HTMLDivElement>(null);
 
   const [activeFilter, setActiveFilter] =
     useState<ConversationFilter>("all");
 
+  const [
+    activeCategory,
+    setActiveCategory,
+  ] = useState<CategoryFilter>("all");
+
   const [showAll, setShowAll] =
     useState(false);
 
   const filteredConversations =
-    activeFilter === "all"
-      ? conversations
-      : conversations.filter(
-          (conversation) =>
-            conversation.media.some(
-              (media) =>
-                media.platform ===
-                activeFilter,
-            ),
-        );
+    conversations.filter(
+      (conversation) =>
+        matchesPlatform(
+          conversation,
+          activeFilter,
+        ) &&
+        matchesCategory(
+          conversation,
+          activeCategory,
+        ),
+    );
 
   const featuredConversations =
     filteredConversations.slice(0, 6);
@@ -339,26 +395,40 @@ export function ConversationsSection() {
       ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       : "md:grid-cols-2 xl:grid-cols-3";
 
+  // Cada contador respeta el otro filtro activo.
   function getFilterCount(
     filter: ConversationFilter,
   ) {
-    if (filter === "all") {
-      return conversations.length;
-    }
-
     return conversations.filter(
       (conversation) =>
-        conversation.media.some(
-          (media) =>
-            media.platform === filter,
+        matchesPlatform(
+          conversation,
+          filter,
+        ) &&
+        matchesCategory(
+          conversation,
+          activeCategory,
         ),
     ).length;
   }
 
-  function handleFilterChange(
-    filter: ConversationFilter,
+  function getCategoryCount(
+    category: CategoryFilter,
   ) {
-    setActiveFilter(filter);
+    return conversations.filter(
+      (conversation) =>
+        matchesCategory(
+          conversation,
+          category,
+        ) &&
+        matchesPlatform(
+          conversation,
+          activeFilter,
+        ),
+    ).length;
+  }
+
+  function resetCarousel() {
     setShowAll(false);
 
     requestAnimationFrame(() => {
@@ -367,6 +437,20 @@ export function ConversationsSection() {
         behavior: "smooth",
       });
     });
+  }
+
+  function handleFilterChange(
+    filter: ConversationFilter,
+  ) {
+    setActiveFilter(filter);
+    resetCarousel();
+  }
+
+  function handleCategoryChange(
+    category: CategoryFilter,
+  ) {
+    setActiveCategory(category);
+    resetCarousel();
   }
 
   function moveCarousel(
@@ -548,6 +632,85 @@ export function ConversationsSection() {
             </Reveal>
           ) : null}
         </div>
+
+        {/* Filtro por categoría */}
+        <Reveal delay={0.04}>
+          <div className="mt-5 flex flex-col gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:items-start sm:gap-5">
+            <p
+              className="shrink-0 pt-2.5 text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-ink/40"
+              id="conversation-categories-label"
+            >
+              Categorías
+            </p>
+
+            <div
+              aria-labelledby="conversation-categories-label"
+              className="flex flex-wrap gap-2"
+              role="group"
+            >
+              {[
+                {
+                  slug: "all" as const,
+                  label: "Todas",
+                },
+                ...conversationCategories,
+              ].map((category) => {
+                const isActive =
+                  activeCategory ===
+                  category.slug;
+
+                const count =
+                  getCategoryCount(
+                    category.slug,
+                  );
+
+                const isEmpty =
+                  count === 0 && !isActive;
+
+                return (
+                  <button
+                    aria-pressed={isActive}
+                    className={cn(
+                      "inline-flex min-h-9 items-center gap-2.5 rounded-full border px-3.5 text-[0.53rem] font-semibold uppercase tracking-[0.12em] transition-all duration-300",
+                      isActive
+                        ? "border-nfd-magenta bg-nfd-magenta text-white shadow-[0_0.8rem_2rem_rgb(182_0_91/0.16)]"
+                        : "border-ink/10 bg-white/45 text-ink/50 backdrop-blur-xl hover:border-nfd-magenta/35 hover:text-nfd-magenta",
+                      isEmpty &&
+                        "cursor-not-allowed opacity-45 hover:border-ink/10 hover:text-ink/50",
+                    )}
+                    disabled={isEmpty}
+                    key={category.slug}
+                    onClick={() => {
+                      handleCategoryChange(
+                        category.slug,
+                      );
+                    }}
+                    type="button"
+                  >
+                    {category.label}
+
+                    <span
+                      className={cn(
+                        "grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[0.48rem]",
+                        isActive
+                          ? "bg-white/15 text-white"
+                          : "bg-ink/5 text-ink/40",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Reveal>
+
+        {filteredConversations.length === 0 ? (
+          <p className="mt-8 rounded-[1.4rem] border border-dashed border-ink/15 bg-white/40 px-6 py-10 text-center text-sm text-ink/50">
+            No hay entrevistas con esta combinación de filtros.
+          </p>
+        ) : null}
 
         {/* Carrusel */}
         {!showAll ? (
