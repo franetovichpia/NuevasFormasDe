@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+
+  images: {
+    // Imágenes subidas desde el panel a Vercel Blob.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname:
+          "*.public.blob.vercel-storage.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

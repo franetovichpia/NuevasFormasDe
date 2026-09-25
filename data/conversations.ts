@@ -1,3 +1,5 @@
+import type { ConversationCategory } from "@/data/categories";
+
 export type ConversationPlatform =
   | "instagram"
   | "youtube"
@@ -14,6 +16,8 @@ export type Conversation = {
   title: string;
   guest?: string;
   date?: string;
+  description?: string;
+  categories?: readonly ConversationCategory[];
   media: readonly ConversationMedia[];
 };
 
@@ -26,6 +30,10 @@ export const conversationChannels = {
     "https://open.spotify.com/show/033PE3rHRNbHlga66ADR7H",
 } as const;
 
+/**
+ * Contenido inicial. Una vez que se importa un CSV/Excel
+ * desde el panel, el sitio usa lo guardado en el almacenamiento.
+ */
 export const conversations: readonly Conversation[] = [
   {
     slug: "la-reconquista",

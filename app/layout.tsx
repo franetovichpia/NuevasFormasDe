@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Montserrat } from "next/font/google";
 
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
-
 import "./globals.css";
 
 const boska = localFont({
@@ -34,7 +31,7 @@ export const metadata: Metadata = {
   title:
     "Nuevas Formas De... | Emiliano Gabriel Rossotti",
   description:
-    "Enfocando nuestra energía en cocrear juntos lo que sí queremos.",
+    "Enfocando nuestra energía en consolidar juntos lo que sí queremos.",
 };
 
 type RootLayoutProps = Readonly<{
@@ -49,11 +46,7 @@ export default function RootLayout({
       <body
         className={`${boska.variable} ${montserrat.variable}`}
       >
-        <SiteHeader />
-
         {children}
-
-        <SiteFooter />
       </body>
     </html>
   );

@@ -38,73 +38,80 @@
   );
 }
 
-* {
-  box-sizing: border-box;
-}
+/*
+ * Estilos base dentro de @layer base: así las clases de Tailwind
+ * (márgenes, tamaños de letra, colores de enlaces, "hidden", etc.)
+ * pueden sobrescribirlos. Fuera de una capa ganaban siempre.
+ */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-  background: var(--background);
-}
+  html {
+    scroll-behavior: smooth;
+    background: var(--background);
+  }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  overflow-x: hidden;
-  background: var(--background);
-  color: var(--ink);
-  font-family: var(--font-montserrat), sans-serif;
-}
+  body {
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--background);
+    color: var(--ink);
+    font-family: var(--font-montserrat), sans-serif;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 
-img,
-svg {
-  display: block;
-}
+  img,
+  svg {
+    display: block;
+  }
 
-h1,
-h2,
-h3,
-h4,
-p {
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  p {
+    margin: 0;
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
 
-p {
-  text-wrap: pretty;
-}
+  p {
+    text-wrap: pretty;
+  }
 
-::selection {
-  background: var(--nfd-magenta);
-  color: white;
-}
+  ::selection {
+    background: var(--nfd-magenta);
+    color: white;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--nfd-blue);
-  outline-offset: 4px;
+  :focus-visible {
+    outline: 2px solid var(--nfd-blue);
+    outline-offset: 4px;
+  }
 }
 
 .container-shell {
@@ -253,5 +260,36 @@ section[id] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+/* ─────────────── Panel de administración ─────────────── */
+
+@layer components {
+  .admin-label {
+    @apply mb-1.5 block text-[0.62rem] font-semibold uppercase tracking-[0.13em] text-ink/55;
+  }
+
+  .admin-input {
+    @apply block w-full rounded-xl border border-ink/15 bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm outline-none transition-colors placeholder:text-ink/30 focus:border-nfd-blue focus:ring-2 focus:ring-nfd-blue/15 disabled:bg-ink/5;
+  }
+
+  .admin-hint {
+    @apply mt-1.5 text-xs leading-relaxed text-ink/45;
+  }
+
+  .admin-card {
+    @apply rounded-[1.25rem] border border-ink/10 bg-white/75 p-5 shadow-[0_1rem_2.5rem_rgb(28_42_54/0.07)] sm:p-6;
+  }
+
+  .admin-button-primary {
+    @apply inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-nfd-blue px-5 text-xs font-semibold text-white transition-colors hover:bg-nfd-navy disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .admin-button-secondary {
+    @apply inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-full border border-ink/15 bg-white px-4 text-xs font-semibold text-ink/70 transition-colors hover:border-nfd-blue/40 hover:text-nfd-blue disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .admin-button-danger {
+    @apply inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-full border border-nfd-coral/30 bg-white px-4 text-xs font-semibold text-nfd-coral transition-colors hover:bg-nfd-coral hover:text-white disabled:cursor-not-allowed disabled:opacity-50;
   }
 }
