@@ -6,7 +6,7 @@ import {
   canDeletePermanently,
   requireSession,
 } from "@/lib/auth";
-import { getAllEvents } from "@/lib/content/repository";
+import { getCachedAllEvents } from "@/lib/content/repository";
 import {
   getEventDateLabel,
   getEventStatus,
@@ -16,7 +16,7 @@ export default async function AdminEventsPage() {
   const [session, events] =
     await Promise.all([
       requireSession(),
-      getAllEvents(),
+      getCachedAllEvents(),
     ]);
 
   return (

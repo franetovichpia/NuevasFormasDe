@@ -1,9 +1,9 @@
 import { InterviewsImporter } from "@/components/admin/interviews-importer";
-import { getAllConversations } from "@/lib/content/repository";
+import { getPublicConversations } from "@/lib/content/repository";
 
 export default async function AdminInterviewsPage() {
   const conversations =
-    await getAllConversations();
+    await getPublicConversations();
 
   return (
     <>

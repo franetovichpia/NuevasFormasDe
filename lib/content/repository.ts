@@ -68,14 +68,30 @@ export async function saveAllEvents(
   );
 }
 
-async function loadPublishedEvents() {
-  try {
-    const events = await getAllEvents();
+/*
+ * Lecturas en caché: el almacenamiento se consulta solo la primera vez y
+ * después de cada guardado desde el panel (que invalida CONTENT_CACHE_TAG).
+ * Así se evita consultar Vercel Blob en cada visita: el plan gratuito tiene
+ * un límite mensual de operaciones.
+ *
+ * Si la lectura falla, el error no se guarda en caché: se muestra el
+ * contenido inicial y se vuelve a intentar en la próxima visita.
+ */
+const cacheOptions = {
+  tags: [CONTENT_CACHE_TAG],
+  revalidate: false as const,
+};
 
-    return events.filter(
-      (event) =>
-        event.visibility === "published",
-    );
+const readCachedEvents = unstable_cache(
+  () => getAllEvents(),
+  ["nfd-events"],
+  cacheOptions,
+);
+
+/** Todos los eventos (incluidos borradores y archivados), para el panel. */
+export async function getCachedAllEvents() {
+  try {
+    return await readCachedEvents();
   } catch (error) {
     console.error(
       "No se pudieron leer los eventos guardados:",
@@ -88,29 +104,23 @@ async function loadPublishedEvents() {
   }
 }
 
-const getCachedPublishedEvents =
-  unstable_cache(
-    loadPublishedEvents,
-    ["nfd-published-events"],
-    {
-      tags: [CONTENT_CACHE_TAG],
-      revalidate: 300,
-    },
-  );
-
 /**
  * Eventos publicados, con estado (próximo/realizado) y texto de
  * fecha ya resueltos, para mostrar en el sitio.
  */
 export async function getPublishedEvents() {
-  const events =
-    await getCachedPublishedEvents();
+  const events = await getCachedAllEvents();
 
-  return events.map((event) => ({
-    ...event,
-    date: getEventDateLabel(event),
-    status: getEventStatus(event),
-  }));
+  return events
+    .filter(
+      (event) =>
+        event.visibility === "published",
+    )
+    .map((event) => ({
+      ...event,
+      date: getEventDateLabel(event),
+      status: getEventStatus(event),
+    }));
 }
 
 /* ─────────────── Entrevistas ─────────────── */
@@ -147,9 +157,17 @@ export async function saveAllConversations(
   );
 }
 
-async function loadPublicConversations() {
+const readCachedConversations =
+  unstable_cache(
+    () => getAllConversations(),
+    ["nfd-conversations"],
+    cacheOptions,
+  );
+
+/** Entrevistas publicadas, para el sitio y el panel. */
+export async function getPublicConversations() {
   try {
-    return await getAllConversations();
+    return await readCachedConversations();
   } catch (error) {
     console.error(
       "No se pudieron leer las entrevistas guardadas:",
@@ -159,13 +177,3 @@ async function loadPublicConversations() {
     return [...initialConversations];
   }
 }
-
-export const getPublicConversations =
-  unstable_cache(
-    loadPublicConversations,
-    ["nfd-public-conversations"],
-    {
-      tags: [CONTENT_CACHE_TAG],
-      revalidate: 300,
-    },
-  );

@@ -5,15 +5,15 @@ import {
 } from "lucide-react";
 
 import {
-  getAllConversations,
-  getAllEvents,
+  getCachedAllEvents,
+  getPublicConversations,
 } from "@/lib/content/repository";
 
 export default async function AdminHomePage() {
   const [events, conversations] =
     await Promise.all([
-      getAllEvents(),
-      getAllConversations(),
+      getCachedAllEvents(),
+      getPublicConversations(),
     ]);
 
   const count = (

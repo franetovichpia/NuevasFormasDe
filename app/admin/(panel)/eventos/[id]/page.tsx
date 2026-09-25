@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { EventForm } from "@/components/admin/event-form";
-import { getAllEvents } from "@/lib/content/repository";
+import { getCachedAllEvents } from "@/lib/content/repository";
 
 export default async function EditEventPage({
   params,
@@ -11,7 +11,7 @@ export default async function EditEventPage({
   }>;
 }) {
   const { id } = await params;
-  const events = await getAllEvents();
+  const events = await getCachedAllEvents();
 
   const event = events.find(
     (item) => item.id === id,
