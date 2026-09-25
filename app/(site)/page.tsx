@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/sections/hero-section";
 import { NexoSection } from "@/components/sections/nexo-section";
 import { ParticipantsSection } from "@/components/sections/participants-section";
 import { ProposalSection } from "@/components/sections/proposal-section";
+import { ValuesSection } from "@/components/sections/values-section";
 import {
   getPublicConversations,
   getPublishedEvents,
@@ -25,10 +26,21 @@ export default async function HomePage() {
 
   return (
     <main>
+      {/* 1. Qué pasa ahora: eventos y de qué se trata */}
       <HeroSection />
+
+      <EventsSection events={events} />
 
       <ProposalSection />
 
+      {/* 2. Qué hacemos */}
+      <ActivitiesSection />
+
+      <ConversationsSection
+        conversations={conversations}
+      />
+
+      {/* 3. Quiénes somos y lo que nos guía */}
       <div
         className="scroll-mt-28"
         id="quienes-participan"
@@ -36,13 +48,7 @@ export default async function HomePage() {
         <ParticipantsSection />
       </div>
 
-      <ActivitiesSection />
-
-      <EventsSection events={events} />
-
-      <ConversationsSection
-        conversations={conversations}
-      />
+      <ValuesSection />
 
       <NexoSection />
 

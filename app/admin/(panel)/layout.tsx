@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ExternalLink,
@@ -27,9 +28,16 @@ export default async function PanelLayout({
       <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
           <Link
-            className="text-sm font-semibold tracking-[-0.02em]"
+            className="flex items-center gap-2.5 text-sm font-semibold tracking-[-0.02em]"
             href="/admin"
           >
+            <Image
+              alt=""
+              className="size-9 rounded-full"
+              height={72}
+              src="/images/brand/nfd-logo-circular.webp"
+              width={72}
+            />
             Nuevas Formas De… · Panel
           </Link>
 

@@ -70,7 +70,7 @@ export function ActivitiesSection() {
           <div className="flex items-end lg:col-span-7 lg:pl-8">
             <Reveal delay={0.08}>
               <p className="max-w-2xl font-sans text-[clamp(1.15rem,1.9vw,1.8rem)] font-normal leading-relaxed text-ink/65">
-                Enfocando nuestra Energía en CoCrear JUNTOS...
+                Enfocando nuestra Energía en conSOLidar JUNTOS...
                 <span className="font-semibold text-nfd-magenta">
                   {" "}
                   #LOQUESI

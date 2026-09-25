@@ -30,7 +30,7 @@ export function ParticipantsSection() {
           <div className="lg:col-span-5">
             <Reveal>
               <p className="text-[0.64rem] font-semibold uppercase tracking-[0.2em] text-nfd-cyan">
-                Nuestro equipo
+                Quiénes somos
               </p>
 
               <h2

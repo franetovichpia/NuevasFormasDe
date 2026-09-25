@@ -12,7 +12,17 @@ npm run dev
 
 Sitio: http://localhost:3000 · Panel: http://localhost:3000/admin
 
+## Páginas
+
+- `/`: portada (eventos, propuesta, actividades, entrevistas, equipo, valores, contacto).
+- `/entrevistas`: todas las entrevistas con filtros por red social y categoría
+  (acepta `?red=youtube&categoria=energias`).
+- `/admin`: panel de contenidos. Se accede desde el botón “Ingresar” del sitio.
+
 ## Panel de contenidos (`/admin`)
+
+Las rutas `/admin/*` y `/api/admin/*` están protegidas por `proxy.ts`: sin sesión
+válida redirigen al ingreso (o responden 401). Cada acción vuelve a verificar la sesión.
 
 | Cuenta | Variables | Puede |
 | --- | --- | --- |
@@ -23,6 +33,8 @@ Sitio: http://localhost:3000 · Panel: http://localhost:3000/admin
   Estados: borrador, publicado o archivado. Todo se puede editar después de publicar.
 - **Entrevistas:** se suben con una planilla Excel (.xlsx) o CSV. Columnas:
   `nombre, invitado, info, descripcion, categoria, plataforma, link, foto`.
+  Una entrevista puede tener varias categorías separadas por coma
+  (`Energías, Arquitectura`).
   El panel permite descargar una plantilla y la lista actual.
 
 ## Almacenamiento

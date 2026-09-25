@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import {
@@ -11,51 +12,6 @@ import { nfdLinks } from "@/data/nfd-links";
 
 const novaireUrl =
   process.env.NEXT_PUBLIC_NOVAIRE_URL;
-
-function FooterMark() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-16"
-      fill="none"
-      viewBox="0 0 72 72"
-    >
-      <circle
-        cx="36"
-        cy="36"
-        fill="#edf3f5"
-        r="34"
-      />
-
-      <path
-        d="M2 33C15 17 30 12 47 17C59 21 67 30 72 42"
-        stroke="#00a5c5"
-        strokeLinecap="round"
-        strokeWidth="8"
-      />
-
-      <path
-        d="M1 44C18 57 37 54 47 43C55 35 62 34 73 40"
-        stroke="#b6005b"
-        strokeLinecap="round"
-        strokeWidth="9"
-      />
-
-      <path
-        d="M42 17C57 13 66 23 62 36C59 46 48 47 41 40"
-        stroke="#173c69"
-        strokeWidth="5"
-      />
-
-      <path
-        d="M45 46C53 50 60 45 63 39"
-        stroke="#ee4037"
-        strokeLinecap="round"
-        strokeWidth="4"
-      />
-    </svg>
-  );
-}
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
@@ -99,9 +55,15 @@ export function SiteFooter() {
             <Link
               aria-label="Nuevas Formas De, volver al inicio"
               className="inline-flex items-center gap-4"
-              href="#inicio"
+              href="/#inicio"
             >
-              <FooterMark />
+              <Image
+                alt=""
+                className="size-20 rounded-full shadow-[0_0.75rem_2rem_rgb(0_0_0/0.35)]"
+                height={160}
+                src="/images/brand/nfd-logo-circular.webp"
+                width={160}
+              />
 
               <span>
                 <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-white">
@@ -115,12 +77,12 @@ export function SiteFooter() {
             </Link>
 
             <p className="mt-8 max-w-md text-sm leading-7 text-white/50">
-              Enfocando nuestra Energía en CoCrear JUNTOS...
+              Enfocando nuestra Energía en conSOLidar JUNTOS...
               <span className="text-nfd-magenta">
                 {" "}
                 #LOQUESI
               </span>
-              ... Queremos.
+              ... QUEREMOS.
             </p>
           </div>
 

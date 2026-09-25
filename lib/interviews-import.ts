@@ -11,6 +11,7 @@ import type {
   ConversationPlatform,
 } from "@/data/conversations";
 import { slugify } from "@/lib/events";
+import { cleanText } from "@/lib/validation";
 
 /**
  * Importación de entrevistas desde una planilla (CSV o Excel).
@@ -287,7 +288,7 @@ export function cellToText(
     return `${value.getUTCDate()} de ${monthNames[value.getUTCMonth()]} de ${value.getUTCFullYear()}`;
   }
 
-  return String(value).trim();
+  return cleanText(String(value), 2000);
 }
 
 export function detectPlatform(

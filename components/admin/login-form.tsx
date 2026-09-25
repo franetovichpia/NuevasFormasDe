@@ -6,6 +6,10 @@ import {
   login,
   type LoginState,
 } from "@/app/admin/actions";
+import {
+  PASSWORD_MAX_LENGTH,
+  USERNAME_PATTERN,
+} from "@/lib/validation";
 
 const initialState: LoginState = {
   error: null,
@@ -29,8 +33,13 @@ export function LoginForm() {
           autoCapitalize="none"
           autoComplete="username"
           className="admin-input"
+          maxLength={40}
+          minLength={2}
           name="username"
+          pattern={USERNAME_PATTERN}
           required
+          spellCheck={false}
+          title="Solo letras, números, punto, guion o guion bajo."
           type="text"
         />
       </label>
@@ -43,6 +52,7 @@ export function LoginForm() {
         <input
           autoComplete="current-password"
           className="admin-input"
+          maxLength={PASSWORD_MAX_LENGTH}
           name="password"
           required
           type="password"

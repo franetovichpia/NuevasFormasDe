@@ -42,6 +42,11 @@ import {
   type ResolvedImportRow,
 } from "@/lib/interviews-import";
 import { findConversationCategory } from "@/data/categories";
+import {
+  cleanText,
+  isValidPassword,
+  isValidUsername,
+} from "@/lib/validation";
 
 export type ActionResult<T = null> =
   | {
@@ -102,10 +107,14 @@ export async function login(
     formData.get("password") ?? "",
   );
 
-  const account = verifyCredentials(
-    username,
-    password,
-  );
+  const account =
+    isValidUsername(username.trim()) &&
+    isValidPassword(password)
+      ? verifyCredentials(
+          username,
+          password,
+        )
+      : null;
 
   if (!account) {
     // Pequeña pausa para desalentar intentos repetidos.
@@ -280,8 +289,47 @@ function getUniqueSlug(
   return slug;
 }
 
-export async function saveEvent(
+/**
+ * Limpia los textos (caracteres invisibles, espacios de más, largo máximo)
+ * antes de validar y guardar.
+ */
+function cleanEventInput(
   input: EventInput,
+): EventInput {
+  return {
+    id:
+      typeof input.id === "string"
+        ? cleanText(input.id, 80)
+        : null,
+    title: cleanText(input.title, 200),
+    startDate: cleanText(input.startDate, 10),
+    endDate: cleanText(input.endDate, 10),
+    date: cleanText(input.date, 120),
+    location: cleanText(input.location, 200),
+    status: input.status,
+    href: cleanText(input.href, 1000),
+    description: cleanText(
+      input.description,
+      20000,
+      {
+        multiline: true,
+      },
+    ),
+    coverImage: cleanText(
+      input.coverImage,
+      1000,
+    ),
+    gallery: Array.isArray(input.gallery)
+      ? input.gallery.map((image) =>
+          cleanText(image, 1000),
+        )
+      : [],
+    visibility: input.visibility,
+  };
+}
+
+export async function saveEvent(
+  rawInput: EventInput,
 ): Promise<
   ActionResult<{
     id: string;
@@ -290,6 +338,8 @@ export async function saveEvent(
   try {
     const session =
       await requireActionSession();
+
+    const input = cleanEventInput(rawInput);
 
     const validationError =
       validateEventInput(input);
@@ -511,10 +561,7 @@ function sanitizeImportRows(
     const text = (
       field: unknown,
       maxLength: number,
-    ) =>
-      typeof field === "string"
-        ? field.trim().slice(0, maxLength)
-        : "";
+    ) => cleanText(field, maxLength);
 
     const title = text(row.title, 200);
     const link = text(row.link, 1000);

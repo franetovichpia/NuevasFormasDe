@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   title:
     "Nuevas Formas De... | Emiliano Gabriel Rossotti",
   description:
-    "Enfocando nuestra energía en cocrear juntos lo que sí queremos.",
+    "Enfocando nuestra energía en consolidar juntos lo que sí queremos.",
 };
 
 type RootLayoutProps = Readonly<{
