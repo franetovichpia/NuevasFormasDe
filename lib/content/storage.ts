@@ -16,9 +16,11 @@ import {
 /**
  * Almacenamiento del contenido editable desde el panel.
  *
- * - Con la variable BLOB_READ_WRITE_TOKEN (Vercel Blob) los datos y las
- *   imágenes se guardan en Vercel Blob. Es lo que se usa en producción.
- * - Sin esa variable se guardan en la carpeta local `.content/`
+ * - Con un Blob store de Vercel conectado al proyecto (variable
+ *   BLOB_STORE_ID, o BLOB_READ_WRITE_TOKEN en proyectos más viejos) los
+ *   datos y las imágenes se guardan en Vercel Blob. Es lo que se usa en
+ *   producción.
+ * - Sin esas variables se guardan en la carpeta local `.content/`
  *   (o NFD_CONTENT_DIR). Sirve para desarrollo o para un servidor propio.
  */
 
@@ -37,7 +39,8 @@ export const LOCAL_UPLOADS_ROUTE =
 
 function usesBlobStorage() {
   return Boolean(
-    process.env.BLOB_READ_WRITE_TOKEN,
+    process.env.BLOB_STORE_ID ||
+      process.env.BLOB_READ_WRITE_TOKEN,
   );
 }
 

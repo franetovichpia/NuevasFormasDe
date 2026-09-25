@@ -28,9 +28,9 @@ Sitio: http://localhost:3000 · Panel: http://localhost:3000/admin
 ## Almacenamiento
 
 - **En Vercel:** crear un Blob store público (Storage → Blob) y conectarlo al
-  proyecto. La variable `BLOB_READ_WRITE_TOKEN` se agrega sola; datos e imágenes
+  proyecto. Vercel agrega solo `BLOB_STORE_ID` (o `BLOB_READ_WRITE_TOKEN`); datos e imágenes
   se guardan ahí (con las últimas 10 versiones como respaldo).
-- **Sin esa variable:** se guarda en la carpeta local `.content/`.
+- **Sin esas variables:** se guarda en la carpeta local `.content/`.
 
 Mientras no se guarde nada desde el panel, el sitio usa el contenido de
 `data/events.ts` y `data/conversations.ts`.
