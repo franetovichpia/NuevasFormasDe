@@ -14,6 +14,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { shouldOptimizeImage } from "@/utils/image";
+
 type EventGalleryProps = {
   eventTitle: string;
   images: readonly string[];
@@ -152,6 +154,11 @@ export function EventGallery({
                     priority
                     sizes="100vw"
                     src={currentImage}
+                    unoptimized={
+                      !shouldOptimizeImage(
+                        currentImage,
+                      )
+                    }
                   />
                 </div>
               </div>

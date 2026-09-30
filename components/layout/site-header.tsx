@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { LoginModalButton } from "@/components/layout/login-modal-button";
 import { Container } from "@/components/ui/container";
 import { mainNavigation } from "@/data/navigation";
 import { cn } from "@/utils/cn";
@@ -136,7 +137,7 @@ export function SiteHeader() {
                 (item) => (
                   <li key={item.href}>
                     <Link
-                      className="relative rounded-full px-3 py-3 text-[0.61rem] font-medium uppercase tracking-[0.12em] text-ink/60 transition-colors duration-300 after:absolute after:bottom-2 after:left-3 after:h-px after:w-0 after:bg-nfd-magenta after:transition-all after:duration-300 hover:text-ink hover:after:w-[calc(100%-1.5rem)]"
+                      className="relative rounded-full px-3 py-3 text-[0.61rem] font-medium uppercase tracking-[0.12em] text-ink/80 transition-colors duration-300 after:absolute after:bottom-2 after:left-3 after:h-px after:w-0 after:bg-nfd-magenta after:transition-all after:duration-300 hover:text-ink hover:after:w-[calc(100%-1.5rem)]"
                       href={item.href}
                     >
                       {item.label}
@@ -149,6 +150,8 @@ export function SiteHeader() {
 
           {/* Acciones */}
           <div className="flex items-center gap-2">
+            <LoginModalButton className="hidden xl:inline-flex" />
+
             <Link
               className="glass-interactive hidden min-h-11 items-center gap-2 rounded-full bg-nfd-blue px-5 text-[0.61rem] font-semibold uppercase tracking-[0.13em] text-white shadow-[0_0.8rem_2rem_rgb(0_111_152/0.2)] hover:bg-nfd-navy xl:inline-flex"
               href="/#eventos"
@@ -250,7 +253,12 @@ export function SiteHeader() {
                   )}
                 </ul>
 
-                <div className="mt-5 border-t border-ink/10 pt-5">
+                <div className="mt-5 flex flex-col gap-3 border-t border-ink/10 pt-5">
+                  <LoginModalButton
+                    className="flex w-full justify-center"
+                    onOpen={closeMenu}
+                  />
+
                   <Link
                     className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full bg-nfd-blue px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-white"
                     href="/#eventos"

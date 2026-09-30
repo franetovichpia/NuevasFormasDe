@@ -164,7 +164,7 @@ export function HeroSection() {
             <Reveal delay={0.1}>
               <p className="mt-5 max-w-xl font-sans text-[clamp(1rem,1.45vw,1.3rem)] font-normal leading-relaxed text-ink/70">
                 Enfocando nuestra Energía
-                en CoCrear JUNTOS...
+                en conSOLidar JUNTOS...
                 <span className="font-semibold text-nfd-magenta">
                   {" "}
                   #LOQUESI
