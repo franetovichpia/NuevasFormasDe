@@ -26,7 +26,8 @@ import {
 
 type ContentDocument =
   | "events"
-  | "conversations";
+  | "conversations"
+  | "settings";
 
 const BLOB_CONTENT_PREFIX = "content/";
 const BLOB_UPLOADS_PREFIX = "uploads/";

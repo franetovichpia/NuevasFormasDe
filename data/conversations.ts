@@ -1,5 +1,3 @@
-import type { ConversationCategory } from "@/data/categories";
-
 export type ConversationPlatform =
   | "instagram"
   | "youtube"
@@ -17,7 +15,8 @@ export type Conversation = {
   guest?: string;
   date?: string;
   description?: string;
-  categories?: readonly ConversationCategory[];
+  /** Nombres de categoría (las 9 fijas o nuevas cargadas desde la planilla). */
+  categories?: readonly string[];
   media: readonly ConversationMedia[];
 };
 

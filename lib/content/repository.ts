@@ -16,6 +16,19 @@ import {
   getEventDateLabel,
   getEventStatus,
 } from "@/lib/events";
+import {
+  fetchSheetRows,
+  parseSheetUrl,
+  SheetAccessError,
+  toDirectImageUrl,
+} from "@/lib/google-sheets";
+import {
+  buildConversations,
+  interpretSheet,
+  isPhotoReference,
+  type ImportIssue,
+  type ResolvedImportRow,
+} from "@/lib/interviews-import";
 
 export const CONTENT_CACHE_TAG =
   "nfd-content";
@@ -69,17 +82,17 @@ export async function saveAllEvents(
 }
 
 /*
- * Lecturas en caché: el almacenamiento se consulta solo la primera vez y
- * después de cada guardado desde el panel (que invalida CONTENT_CACHE_TAG).
- * Así se evita consultar Vercel Blob en cada visita: el plan gratuito tiene
- * un límite mensual de operaciones.
+ * Lecturas en caché: el almacenamiento se consulta después de cada
+ * guardado desde el panel (que invalida CONTENT_CACHE_TAG) y, como
+ * resguardo, una vez por día. Así se evita consultar Vercel Blob en cada
+ * visita: el plan gratuito tiene un límite mensual de operaciones.
  *
  * Si la lectura falla, el error no se guarda en caché: se muestra el
  * contenido inicial y se vuelve a intentar en la próxima visita.
  */
 const cacheOptions = {
   tags: [CONTENT_CACHE_TAG],
-  revalidate: false as const,
+  revalidate: 60 * 60 * 24,
 };
 
 const readCachedEvents = unstable_cache(
@@ -164,8 +177,8 @@ const readCachedConversations =
     cacheOptions,
   );
 
-/** Entrevistas publicadas, para el sitio y el panel. */
-export async function getPublicConversations() {
+/** Entrevistas guardadas desde el panel (importación de Excel/CSV). */
+async function getStoredConversations() {
   try {
     return await readCachedConversations();
   } catch (error) {
@@ -176,4 +189,225 @@ export async function getPublicConversations() {
 
     return [...initialConversations];
   }
+}
+
+/* ─────────────── Configuración ─────────────── */
+
+export type SiteSettings = {
+  /** Planilla de Google Sheets con las entrevistas (opcional). */
+  interviewsSheetUrl?: string | null;
+  updatedAt?: string;
+  updatedBy?: string;
+};
+
+export async function getSettings(): Promise<SiteSettings> {
+  return (
+    (await readContentDocument<SiteSettings>(
+      "settings",
+    )) ?? {}
+  );
+}
+
+export async function saveSettings(
+  settings: SiteSettings,
+  updatedBy: string,
+) {
+  await writeContentDocument("settings", {
+    ...settings,
+    updatedAt: new Date().toISOString(),
+    updatedBy,
+  });
+}
+
+const readCachedSettings = unstable_cache(
+  () => getSettings(),
+  ["nfd-settings"],
+  cacheOptions,
+);
+
+export async function getCachedSettings(): Promise<SiteSettings> {
+  try {
+    return await readCachedSettings();
+  } catch (error) {
+    console.error(
+      "No se pudo leer la configuración:",
+      error,
+    );
+
+    return {};
+  }
+}
+
+/* ─────────────── Entrevistas desde Google Sheets ─────────────── */
+
+export const SHEET_CACHE_TAG =
+  "nfd-interviews-sheet";
+
+// Cada cuánto se vuelve a leer la planilla (en segundos).
+export const SHEET_REFRESH_SECONDS = 300;
+
+export type SheetReadResult = {
+  conversations: Conversation[];
+  rowCount: number;
+  issues: ImportIssue[];
+  fetchedAt: string;
+};
+
+/**
+ * Lee la planilla y arma las entrevistas con el mismo formato que la
+ * importación. Las filas con errores se saltean y se informan en el panel.
+ * Si una fila no tiene foto, se usa la de la entrevista ya guardada con el
+ * mismo nombre y red (si existe).
+ */
+export async function readInterviewsFromSheet(
+  url: string,
+): Promise<SheetReadResult> {
+  const source = parseSheetUrl(url);
+
+  if (!source) {
+    throw new SheetAccessError(
+      "El enlace no es de una planilla de Google Sheets.",
+    );
+  }
+
+  const sheet = await fetchSheetRows(source);
+  const { rows, issues } = interpretSheet(sheet);
+  const allIssues: ImportIssue[] = [...issues];
+  const resolvedRows: ResolvedImportRow[] = [];
+
+  for (const row of rows) {
+    const { photo, ...rest } = row;
+    const value = photo.trim();
+
+    if (value && !isPhotoReference(value)) {
+      allIssues.push({
+        rowNumber: row.rowNumber,
+        message: `“${row.title}”: la foto tiene que ser un enlace (por ejemplo, de Google Drive), no un nombre de archivo.`,
+      });
+
+      continue;
+    }
+
+    resolvedRows.push({
+      ...rest,
+      image: value
+        ? toDirectImageUrl(value)
+        : "",
+    });
+  }
+
+  const built = buildConversations(
+    resolvedRows,
+    await getStoredConversations(),
+    "replace",
+  );
+
+  // Las redes sin foto no se muestran (quedan informadas como error).
+  const conversations = built.conversations
+    .map((conversation) => ({
+      ...conversation,
+      media: conversation.media.filter(
+        (media) => media.image,
+      ),
+    }))
+    .filter(
+      (conversation) =>
+        conversation.media.length > 0,
+    );
+
+  return {
+    conversations,
+    rowCount: rows.length,
+    issues: [...allIssues, ...built.issues],
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+const readCachedSheet = unstable_cache(
+  (url: string) => readInterviewsFromSheet(url),
+  ["nfd-interviews-sheet"],
+  {
+    tags: [SHEET_CACHE_TAG, CONTENT_CACHE_TAG],
+    revalidate: SHEET_REFRESH_SECONDS,
+  },
+);
+
+export type SheetStatus =
+  | {
+      connected: false;
+    }
+  | {
+      connected: true;
+      url: string;
+      ok: true;
+      result: SheetReadResult;
+    }
+  | {
+      connected: true;
+      url: string;
+      ok: false;
+      error: string;
+    };
+
+/** Estado de la planilla conectada, para el panel. */
+export async function getSheetStatus(): Promise<SheetStatus> {
+  const { interviewsSheetUrl } =
+    await getCachedSettings();
+
+  if (!interviewsSheetUrl) {
+    return {
+      connected: false,
+    };
+  }
+
+  try {
+    return {
+      connected: true,
+      url: interviewsSheetUrl,
+      ok: true,
+      result: await readCachedSheet(
+        interviewsSheetUrl,
+      ),
+    };
+  } catch (error) {
+    return {
+      connected: true,
+      url: interviewsSheetUrl,
+      ok: false,
+      error:
+        error instanceof SheetAccessError
+          ? error.message
+          : "No se pudo leer la planilla.",
+    };
+  }
+}
+
+/**
+ * Entrevistas que se muestran en el sitio: las de la planilla de Google
+ * Sheets si hay una conectada; si no (o si falla), las guardadas desde el panel.
+ */
+export async function getPublicConversations(): Promise<
+  Conversation[]
+> {
+  const { interviewsSheetUrl } =
+    await getCachedSettings();
+
+  if (interviewsSheetUrl) {
+    try {
+      const result = await readCachedSheet(
+        interviewsSheetUrl,
+      );
+
+      if (result.conversations.length > 0) {
+        return result.conversations;
+      }
+    } catch (error) {
+      console.error(
+        "No se pudo leer la planilla de entrevistas:",
+        error,
+      );
+    }
+  }
+
+  return getStoredConversations();
 }

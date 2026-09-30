@@ -1,8 +1,8 @@
-import {
-  conversationCategories,
-  type ConversationCategory,
-} from "@/data/categories";
-import type { ConversationPlatform } from "@/data/conversations";
+import { resolveCategory } from "@/data/categories";
+import type {
+  Conversation,
+  ConversationPlatform,
+} from "@/data/conversations";
 
 /**
  * Filtros de entrevistas que se usan tanto en el servidor
@@ -13,21 +13,14 @@ export type ConversationFilter =
   | "all"
   | ConversationPlatform;
 
-export type CategoryFilter =
-  | "all"
-  | ConversationCategory;
+/** "all" o el identificador (slug) de una categoría. */
+export type CategoryFilter = string;
 
 const platformValues = new Set<string>([
   "youtube",
   "instagram",
   "podcast",
 ]);
-
-const categoryValues = new Set<string>(
-  conversationCategories.map(
-    (category) => category.slug,
-  ),
-);
 
 export function parsePlatformFilter(
   value: string | null | undefined,
@@ -40,9 +33,19 @@ export function parsePlatformFilter(
 export function parseCategoryFilter(
   value: string | null | undefined,
 ): CategoryFilter {
-  return value && categoryValues.has(value)
-    ? (value as ConversationCategory)
+  return value && /^[a-z0-9-]{1,60}$/.test(value)
+    ? value
     : "all";
+}
+
+export function hasCategory(
+  conversation: Conversation,
+  slug: string,
+) {
+  return (conversation.categories ?? []).some(
+    (value) =>
+      resolveCategory(value)?.slug === slug,
+  );
 }
 
 /**

@@ -31,7 +31,15 @@ válida redirigen al ingreso (o responden 401). Cada acción vuelve a verificar 
 
 - **Eventos:** título, descripción, lugar, enlace, fechas, portada y galería.
   Estados: borrador, publicado o archivado. Todo se puede editar después de publicar.
-- **Entrevistas:** se suben con una planilla Excel (.xlsx) o CSV. Columnas:
+- **Eventos en el sitio:** se muestran en un calendario (solo se marcan los días con
+  eventos: magenta los próximos, azul los realizados) con tarjetas chicas al costado;
+  la flecha de cada tarjeta abre el detalle en un modal.
+- **Entrevistas desde Google Sheets:** en el panel se pega el enlace de una planilla
+  compartida como “Cualquier persona con el enlace · Lector”. El sitio la lee cada
+  5 minutos (o al instante con “Actualizar ahora”). Las fotos deben ser enlaces
+  (los de Google Drive se convierten solos). Si la planilla falla, se muestra la
+  última lista guardada. Categorías nuevas escritas en la planilla se suman como filtros.
+- **Entrevistas por archivo:** también se pueden subir con un Excel (.xlsx) o CSV. Columnas:
   `nombre, invitado, info, descripcion, categoria, plataforma, link, foto`.
   Una entrevista puede tener varias categorías separadas por coma
   (`Energías, Arquitectura`).

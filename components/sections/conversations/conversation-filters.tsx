@@ -3,12 +3,17 @@
 import { ChevronDown } from "lucide-react";
 import {
   useId,
+  useMemo,
   useState,
 } from "react";
 
-import { conversationCategories } from "@/data/categories";
+import {
+  getCategoryOptions,
+  type CategoryInfo,
+} from "@/data/categories";
 import type { Conversation } from "@/data/conversations";
 import {
+  hasCategory,
   parseCategoryFilter,
   parsePlatformFilter,
   type CategoryFilter,
@@ -56,9 +61,7 @@ function matchesCategory(
 ) {
   return (
     filter === "all" ||
-    (conversation.categories ?? []).includes(
-      filter,
-    )
+    hasCategory(conversation, filter)
   );
 }
 
@@ -77,9 +80,20 @@ export function useConversationFilters(
       initial.platform ?? "all",
     );
 
+  const categoryOptions = useMemo(
+    () => getCategoryOptions(conversations),
+    [conversations],
+  );
+
   const [category, setCategory] =
-    useState<CategoryFilter>(
-      initial.category ?? "all",
+    useState<CategoryFilter>(() =>
+      // Una categoría de la dirección que ya no existe vuelve a "todas".
+      categoryOptions.some(
+        (option) =>
+          option.slug === initial.category,
+      )
+        ? initial.category!
+        : "all",
     );
 
   const filtered = conversations.filter(
@@ -110,6 +124,7 @@ export function useConversationFilters(
   }
 
   return {
+    categoryOptions,
     platform,
     setPlatform,
     category,
@@ -207,6 +222,7 @@ type ConversationFiltersProps = {
   countCategory: (
     value: CategoryFilter,
   ) => number;
+  categoryOptions: readonly CategoryInfo[];
   onChange?: () => void;
 };
 
@@ -217,6 +233,7 @@ export function ConversationFilters({
   setCategory,
   countPlatform,
   countCategory,
+  categoryOptions,
   onChange,
 }: ConversationFiltersProps) {
   const hasFilters =
@@ -259,7 +276,7 @@ export function ConversationFilters({
             label: "Todas las categorías",
             count: countCategory("all"),
           },
-          ...conversationCategories.map(
+          ...categoryOptions.map(
             (item) => ({
               value: item.slug,
               label: item.label,

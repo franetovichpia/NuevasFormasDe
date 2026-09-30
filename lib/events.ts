@@ -101,7 +101,7 @@ export function formatEventDateRange(
   return `${start.day} de ${startMonth} de ${start.year} al ${end.day} de ${endMonth} de ${end.year}`;
 }
 
-function getTodayInArgentina() {
+export function getTodayInArgentina() {
   // "en-CA" devuelve el formato AAAA-MM-DD.
   return new Intl.DateTimeFormat(
     "en-CA",

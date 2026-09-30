@@ -134,3 +134,48 @@ test.describe("Navegación y accesos", () => {
     expect(upload.status()).toBe(401);
   });
 });
+
+test.describe("Calendario de eventos", () => {
+  test("elegir un evento lo marca en el calendario y la flecha abre el detalle", async ({
+    page,
+  }) => {
+    await page.goto("/#eventos", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const section = page.locator("#eventos");
+
+    await section
+      .getByRole("button", {
+        name: /Primera Convención/,
+      })
+      .first()
+      .click();
+
+    await expect(
+      section.locator("[aria-live]"),
+    ).toContainText("Mayo 2025");
+
+    await expect(
+      section.getByRole("button", {
+        name: /^24 de Mayo/,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    await section
+      .getByRole("button", {
+        name: "Ver detalle de Primera Convención",
+      })
+      .click();
+
+    const dialog = page.getByRole("dialog");
+
+    await expect(dialog).toContainText(
+      "Primera Convención",
+    );
+
+    await page.keyboard.press("Escape");
+
+    await expect(dialog).toHaveCount(0);
+  });
+});

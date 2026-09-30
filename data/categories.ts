@@ -97,3 +97,103 @@ export function findConversationCategory(
 
   return category?.slug ?? null;
 }
+
+export type CategoryInfo = {
+  slug: string;
+  label: string;
+};
+
+function toSlug(value: string) {
+  return (
+    normalizeText(value)
+      .replace(/ /g, "-")
+      .slice(0, 60) || "categoria"
+  );
+}
+
+/**
+ * Categoría a partir de un texto. Si coincide con una de las 9 fijas
+ * devuelve esa; si no, crea una categoría nueva con el nombre tal cual
+ * se escribió (así las planillas pueden sumar filtros nuevos).
+ */
+export function resolveCategory(
+  value: string,
+): CategoryInfo | null {
+  const text = value
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 40);
+
+  if (!normalizeText(text)) {
+    return null;
+  }
+
+  const known = findConversationCategory(text);
+
+  if (known) {
+    return {
+      slug: known,
+      label: conversationCategoryLabels[known],
+    };
+  }
+
+  return {
+    slug: toSlug(text),
+    label:
+      text.charAt(0).toUpperCase() +
+      text.slice(1),
+  };
+}
+
+export function isFixedCategory(
+  slug: string,
+) {
+  return slug in conversationCategoryLabels;
+}
+
+/**
+ * Categorías para los filtros: primero las 9 fijas y después,
+ * en orden alfabético, las nuevas que aparezcan en las entrevistas.
+ */
+export function getCategoryOptions(
+  conversations: readonly {
+    categories?: readonly string[];
+  }[],
+): CategoryInfo[] {
+  const extra = new Map<string, string>();
+
+  for (const conversation of conversations) {
+    for (const value of conversation.categories ??
+      []) {
+      const category = resolveCategory(value);
+
+      if (
+        category &&
+        !isFixedCategory(category.slug) &&
+        !extra.has(category.slug)
+      ) {
+        extra.set(category.slug, category.label);
+      }
+    }
+  }
+
+  return [
+    ...conversationCategories.map(
+      (category) => ({
+        slug: category.slug as string,
+        label: category.label as string,
+      }),
+    ),
+    ...[...extra.entries()]
+      .map(([slug, label]) => ({
+        slug,
+        label,
+      }))
+      .sort((first, second) =>
+        first.label.localeCompare(
+          second.label,
+          "es",
+        ),
+      ),
+  ];
+}

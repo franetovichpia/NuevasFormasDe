@@ -1,9 +1,6 @@
 import {
-  conversationCategories,
-  conversationCategoryLabels,
-  findConversationCategory,
   normalizeText,
-  type ConversationCategory,
+  resolveCategory,
 } from "@/data/categories";
 import type {
   Conversation,
@@ -115,7 +112,7 @@ export type ImportRow = {
   guest: string;
   info: string;
   description: string;
-  categories: ConversationCategory[];
+  categories: string[];
   platform: ConversationPlatform;
   link: string;
   /** Valor original de la columna foto. */
@@ -522,25 +519,22 @@ export function interpretSheet(
         );
       }
 
-      const categories: ConversationCategory[] =
-        [];
+      // Las 9 categorías fijas se reconocen con o sin acentos;
+      // cualquier otra se agrega como categoría nueva.
+      const categories: string[] = [];
+      const categorySlugs = new Set<string>();
 
       for (const name of splitCategories(
         values.category,
       )) {
-        const category =
-          findConversationCategory(name);
+        const category = resolveCategory(name);
 
-        if (!category) {
-          rowIssues.push(
-            `categoría "${name}" desconocida (válidas: ${conversationCategories
-              .map((item) => item.label)
-              .join(", ")})`,
-          );
-        } else if (
-          !categories.includes(category)
+        if (
+          category &&
+          !categorySlugs.has(category.slug)
         ) {
-          categories.push(category);
+          categorySlugs.add(category.slug);
+          categories.push(category.label);
         }
       }
 
@@ -599,7 +593,7 @@ type MutableConversation = Omit<
   "media" | "categories"
 > & {
   media: ConversationMedia[];
-  categories: ConversationCategory[];
+  categories: string[];
 };
 
 function optional(value: string) {
@@ -820,9 +814,8 @@ export function conversationsToRows(
           (conversation.categories ?? [])
             .map(
               (category) =>
-                conversationCategoryLabels[
-                  category
-                ],
+                resolveCategory(category)
+                  ?.label ?? category,
             )
             .join(", "),
           platformExportLabels[

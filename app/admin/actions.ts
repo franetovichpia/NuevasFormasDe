@@ -26,9 +26,17 @@ import {
   CONTENT_CACHE_TAG,
   getAllConversations,
   getAllEvents,
+  getSettings,
+  readInterviewsFromSheet,
   saveAllConversations,
   saveAllEvents,
+  saveSettings,
+  SHEET_CACHE_TAG,
 } from "@/lib/content/repository";
+import {
+  parseSheetUrl,
+  SheetAccessError,
+} from "@/lib/google-sheets";
 import {
   isIsoDate,
   slugify,
@@ -41,7 +49,7 @@ import {
   type ImportIssue,
   type ResolvedImportRow,
 } from "@/lib/interviews-import";
-import { findConversationCategory } from "@/data/categories";
+import { resolveCategory } from "@/data/categories";
 import {
   cleanText,
   isValidPassword,
@@ -575,13 +583,15 @@ function sanitizeImportRows(
     const categories = Array.isArray(
       row.categories,
     )
-      ? row.categories.map((category) =>
-          typeof category === "string"
-            ? findConversationCategory(
-                category,
-              )
-            : null,
-        )
+      ? row.categories
+          .slice(0, 20)
+          .map((category) =>
+            typeof category === "string"
+              ? resolveCategory(
+                  cleanText(category, 40),
+                )
+              : null,
+          )
       : [];
 
     if (
@@ -610,11 +620,16 @@ function sanitizeImportRows(
         600,
       ),
       categories: [
-        ...new Set(
-          categories.filter(
-            (category) => category !== null,
-          ),
-        ),
+        ...new Map(
+          categories
+            .filter(
+              (category) => category !== null,
+            )
+            .map((category) => [
+              category.slug,
+              category.label,
+            ]),
+        ).values(),
       ],
       platform,
       link,
@@ -687,6 +702,140 @@ export async function importInterviews(
         total:
           result.conversations.length,
       },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toErrorMessage(error),
+    };
+  }
+}
+
+/* ─────────────── Google Sheets ─────────────── */
+
+export type SheetConnectResult =
+  | {
+      ok: true;
+      data: {
+        interviews: number;
+        rows: number;
+        issues: number;
+      };
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+/**
+ * Conecta la planilla: primero la lee para confirmar que es accesible
+ * y tiene el formato correcto, después la guarda en la configuración.
+ */
+export async function connectInterviewsSheet(
+  rawUrl: string,
+): Promise<SheetConnectResult> {
+  try {
+    const session =
+      await requireActionSession();
+
+    const url = cleanText(rawUrl, 1000);
+    const source = parseSheetUrl(url);
+
+    if (!source) {
+      return {
+        ok: false,
+        error:
+          "Pegá el enlace de la planilla de Google Sheets (empieza con https://docs.google.com/spreadsheets/…).",
+      };
+    }
+
+    const result =
+      await readInterviewsFromSheet(url);
+
+    if (result.conversations.length === 0) {
+      return {
+        ok: false,
+        error:
+          result.issues[0]?.message ??
+          "La planilla no tiene entrevistas válidas.",
+      };
+    }
+
+    const settings = await getSettings();
+
+    await saveSettings(
+      {
+        ...settings,
+        interviewsSheetUrl: source.url,
+      },
+      session.username,
+    );
+
+    updateTag(SHEET_CACHE_TAG);
+    refreshPublicContent();
+
+    return {
+      ok: true,
+      data: {
+        interviews:
+          result.conversations.length,
+        rows: result.rowCount,
+        issues: result.issues.length,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof SheetAccessError
+          ? error.message
+          : toErrorMessage(error),
+    };
+  }
+}
+
+export async function disconnectInterviewsSheet(): Promise<ActionResult> {
+  try {
+    const session =
+      await requireActionSession();
+
+    const settings = await getSettings();
+
+    await saveSettings(
+      {
+        ...settings,
+        interviewsSheetUrl: null,
+      },
+      session.username,
+    );
+
+    refreshPublicContent();
+
+    return {
+      ok: true,
+      data: null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: toErrorMessage(error),
+    };
+  }
+}
+
+/** Vuelve a leer la planilla ahora, sin esperar la actualización automática. */
+export async function refreshInterviewsSheet(): Promise<ActionResult> {
+  try {
+    await requireActionSession();
+
+    updateTag(SHEET_CACHE_TAG);
+    revalidatePath("/");
+    revalidatePath("/entrevistas");
+    revalidatePath("/admin", "layout");
+
+    return {
+      ok: true,
+      data: null,
     };
   } catch (error) {
     return {

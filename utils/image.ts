@@ -1,6 +1,6 @@
 /**
- * Las imágenes propias (/images/...) y las subidas a Vercel Blob pasan por
- * el optimizador de Next.js. El resto (por ejemplo, un enlace externo
+ * Las imágenes propias (/images/...), las subidas a Vercel Blob y las de
+ * Google Drive pasan por el optimizador de Next.js. El resto (por ejemplo, un enlace externo
  * cargado desde el CSV) se muestra tal cual, sin optimizar.
  */
 export function shouldOptimizeImage(
@@ -11,10 +11,13 @@ export function shouldOptimizeImage(
   }
 
   try {
-    return new URL(
-      src,
-    ).hostname.endsWith(
-      ".public.blob.vercel-storage.com",
+    const { hostname } = new URL(src);
+
+    return (
+      hostname.endsWith(
+        ".public.blob.vercel-storage.com",
+      ) ||
+      hostname === "lh3.googleusercontent.com"
     );
   } catch {
     return false;

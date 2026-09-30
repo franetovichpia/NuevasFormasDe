@@ -1,9 +1,17 @@
 import { InterviewsImporter } from "@/components/admin/interviews-importer";
-import { getPublicConversations } from "@/lib/content/repository";
+import { SheetConnection } from "@/components/admin/sheet-connection";
+import {
+  getPublicConversations,
+  getSheetStatus,
+  SHEET_REFRESH_SECONDS,
+} from "@/lib/content/repository";
 
 export default async function AdminInterviewsPage() {
-  const conversations =
-    await getPublicConversations();
+  const [conversations, sheetStatus] =
+    await Promise.all([
+      getPublicConversations(),
+      getSheetStatus(),
+    ]);
 
   return (
     <>
@@ -12,13 +20,23 @@ export default async function AdminInterviewsPage() {
       </h1>
 
       <p className="mt-2 max-w-3xl text-sm text-ink/55">
-        Subí una planilla de Excel (.xlsx) o un CSV con una fila por
-        entrevista y red social. Antes de publicar vas a ver una
-        vista previa para revisar que todo esté bien.
+        Conectá una planilla de Google Sheets para que el sitio lea las
+        entrevistas directamente, o subí un Excel (.xlsx) o CSV con una
+        fila por entrevista y red social.
       </p>
+
+      <div className="mt-8">
+        <SheetConnection
+          refreshMinutes={
+            SHEET_REFRESH_SECONDS / 60
+          }
+          status={sheetStatus}
+        />
+      </div>
 
       <InterviewsImporter
         conversations={conversations}
+        sheetConnected={sheetStatus.connected}
       />
     </>
   );

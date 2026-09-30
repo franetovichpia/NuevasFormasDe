@@ -23,7 +23,7 @@ import {
 import { uploadImage } from "@/components/admin/upload-image";
 import {
   conversationCategories,
-  conversationCategoryLabels,
+  resolveCategory,
   normalizeText,
 } from "@/data/categories";
 import type {
@@ -72,6 +72,8 @@ type PhotoSource =
 
 type InterviewsImporterProps = {
   conversations: Conversation[];
+  /** Con una planilla de Google Sheets conectada no se sube a mano. */
+  sheetConnected?: boolean;
 };
 
 function downloadCsv(
@@ -136,6 +138,7 @@ async function readSpreadsheet(
 
 export function InterviewsImporter({
   conversations,
+  sheetConnected = false,
 }: InterviewsImporterProps) {
   const router = useRouter();
 
@@ -547,7 +550,7 @@ export function InterviewsImporter({
                   {conversationCategories
                     .map((category) => category.label)
                     .join(", ")}
-                  .
+                  . Si escribís otra, se agrega como filtro nuevo.
                 </td>
               </tr>
               <tr>
@@ -641,6 +644,14 @@ export function InterviewsImporter({
         </p>
       </section>
 
+      {sheetConnected ? (
+        <p className="rounded-xl border border-nfd-blue/20 bg-nfd-blue/5 px-4 py-3 text-sm text-ink/65">
+          Mientras la planilla de Google Sheets esté conectada, las
+          entrevistas se cargan desde ahí. Para volver a subir un
+          Excel o CSV, desconectá la planilla.
+        </p>
+      ) : (
+        <>
       {/* Carga */}
       <section className="admin-card space-y-5">
         <h2 className="text-lg font-semibold tracking-[-0.02em]">
@@ -975,9 +986,7 @@ export function InterviewsImporter({
                             ? row.categories
                                 .map(
                                   (category) =>
-                                    conversationCategoryLabels[
-                                      category
-                                    ],
+                                    resolveCategory(category)?.label ?? category,
                                 )
                                 .join(", ")
                             : "—"}
@@ -1015,11 +1024,16 @@ export function InterviewsImporter({
           ) : null}
         </section>
       ) : null}
+        </>
+      )}
 
       {/* Publicadas */}
       <section className="admin-card">
         <h2 className="text-lg font-semibold tracking-[-0.02em]">
           Publicadas ahora ({conversations.length})
+          {sheetConnected
+            ? " · desde Google Sheets"
+            : ""}
         </h2>
 
         <div className="mt-4 overflow-x-auto">
@@ -1067,9 +1081,7 @@ export function InterviewsImporter({
                         )
                           .map(
                             (category) =>
-                              conversationCategoryLabels[
-                                category
-                              ],
+                              resolveCategory(category)?.label ?? category,
                           )
                           .join(", ")
                       ) : (
