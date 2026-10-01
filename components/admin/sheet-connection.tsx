@@ -273,8 +273,7 @@ export function SheetConnection({
           status.result.issues.length > 0 ? (
             <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4">
               <p className="text-sm font-semibold text-amber-900">
-                Estas filas no se muestran en el sitio hasta
-                corregirlas en la planilla:
+                Revisá estas filas en la planilla:
               </p>
 
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-900/80">

@@ -16,6 +16,7 @@ import {
   getEventDateLabel,
   getEventStatus,
 } from "@/lib/events";
+import { resolveCategory } from "@/data/categories";
 import { resolvePlatformName } from "@/data/platforms";
 import type { FilterConfig } from "@/lib/conversation-filters";
 import {
@@ -296,7 +297,45 @@ export async function readInterviewsFromSheet(
   const allIssues: ImportIssue[] = [...issues];
   const resolvedRows: ResolvedImportRow[] = [];
 
+  // Si la hoja "Configuración" tiene categorías, solo se aceptan esas:
+  // las demás se ignoran y se informan en el panel.
+  const allowedCategories = config?.categories
+    ? new Map(
+        config.categories
+          .map((name) => resolveCategory(name))
+          .filter(
+            (category) => category !== null,
+          )
+          .map((category) => [
+            category.slug,
+            category.label,
+          ]),
+      )
+    : null;
+
   for (const row of rows) {
+    if (allowedCategories) {
+      const accepted: string[] = [];
+
+      for (const name of row.categories) {
+        const slug = resolveCategory(name)?.slug;
+        const label = slug
+          ? allowedCategories.get(slug)
+          : undefined;
+
+        if (label) {
+          accepted.push(label);
+        } else {
+          allIssues.push({
+            rowNumber: row.rowNumber,
+            message: `“${row.title}”: la categoría “${name}” no está en la hoja Configuración (se publica sin esa categoría).`,
+          });
+        }
+      }
+
+      row.categories = accepted;
+    }
+
     const { photo, ...rest } = row;
     const value = photo.trim();
 
