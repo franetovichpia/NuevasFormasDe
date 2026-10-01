@@ -43,13 +43,13 @@ import {
 } from "@/lib/events";
 import {
   buildConversations,
-  detectPlatform,
   isHttpUrl,
   isPhotoReference,
   type ImportIssue,
   type ResolvedImportRow,
 } from "@/lib/interviews-import";
 import { resolveCategory } from "@/data/categories";
+import { resolvePlatformName } from "@/data/platforms";
 import {
   cleanText,
   isValidPassword,
@@ -69,6 +69,7 @@ export type ActionResult<T = null> =
 function refreshPublicContent() {
   updateTag(CONTENT_CACHE_TAG);
   revalidatePath("/");
+  revalidatePath("/eventos");
   revalidatePath("/admin", "layout");
 }
 
@@ -577,7 +578,15 @@ function sanitizeImportRows(
 
     const platform =
       typeof row.platform === "string"
-        ? detectPlatform(row.platform)
+        ? resolvePlatformName(
+            cleanText(
+              typeof row.platformLabel ===
+                "string" && row.platformLabel
+                ? row.platformLabel
+                : row.platform,
+              30,
+            ),
+          )
         : null;
 
     const categories = Array.isArray(
@@ -631,7 +640,8 @@ function sanitizeImportRows(
             ]),
         ).values(),
       ],
-      platform,
+      platform: platform.slug,
+      platformLabel: platform.label,
       link,
       image,
     });

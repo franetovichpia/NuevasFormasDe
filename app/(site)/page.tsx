@@ -8,6 +8,7 @@ import { ParticipantsSection } from "@/components/sections/participants-section"
 import { ProposalSection } from "@/components/sections/proposal-section";
 import { ValuesSection } from "@/components/sections/values-section";
 import {
+  getInterviewsFilterConfig,
   getPublicConversations,
   getPublishedEvents,
 } from "@/lib/content/repository";
@@ -18,10 +19,11 @@ import {
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [events, conversations] =
+  const [events, conversations, filterConfig] =
     await Promise.all([
       getPublishedEvents(),
       getPublicConversations(),
+      getInterviewsFilterConfig(),
     ]);
 
   return (
@@ -38,6 +40,7 @@ export default async function HomePage() {
 
       <ConversationsSection
         conversations={conversations}
+        filterConfig={filterConfig}
       />
 
       {/* 3. Quiénes somos y lo que nos guía */}

@@ -26,10 +26,8 @@ import {
   resolveCategory,
   normalizeText,
 } from "@/data/categories";
-import type {
-  Conversation,
-  ConversationPlatform,
-} from "@/data/conversations";
+import type { Conversation } from "@/data/conversations";
+import { getPlatformLabel } from "@/data/platforms";
 import {
   conversationsToRows,
   interpretSheet,
@@ -43,14 +41,6 @@ import {
 } from "@/lib/interviews-import";
 import { cn } from "@/utils/cn";
 
-const platformLabels: Record<
-  ConversationPlatform,
-  string
-> = {
-  youtube: "YouTube",
-  instagram: "Instagram",
-  podcast: "Spotify",
-};
 
 type PhotoSource =
   | {
@@ -1000,9 +990,10 @@ export function InterviewsImporter({
                             target="_blank"
                           >
                             {
-                              platformLabels[
-                                row.platform
-                              ]
+                              getPlatformLabel(
+                                row.platform,
+                                row.platformLabel,
+                              )
                             }
                           </a>
                         </td>
@@ -1095,9 +1086,10 @@ export function InterviewsImporter({
                       {conversation.media
                         .map(
                           (media) =>
-                            platformLabels[
-                              media.platform
-                            ],
+                            getPlatformLabel(
+                              media.platform,
+                              media.platformLabel,
+                            ),
                         )
                         .join(", ")}
                     </td>

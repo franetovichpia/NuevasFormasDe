@@ -11,6 +11,10 @@ import {
   getCategoryOptions,
   type CategoryInfo,
 } from "@/data/categories";
+import {
+  getPlatformOptions,
+  type PlatformInfo,
+} from "@/data/platforms";
 import type { Conversation } from "@/data/conversations";
 import {
   hasCategory,
@@ -18,30 +22,9 @@ import {
   parsePlatformFilter,
   type CategoryFilter,
   type ConversationFilter,
+  type FilterConfig,
 } from "@/lib/conversation-filters";
 import { cn } from "@/utils/cn";
-
-const platformOptions: {
-  value: ConversationFilter;
-  label: string;
-}[] = [
-  {
-    value: "all",
-    label: "Todas las redes",
-  },
-  {
-    value: "youtube",
-    label: "YouTube",
-  },
-  {
-    value: "instagram",
-    label: "Instagram",
-  },
-  {
-    value: "podcast",
-    label: "Podcast (Spotify)",
-  },
-];
 
 function matchesPlatform(
   conversation: Conversation,
@@ -74,15 +57,34 @@ export function useConversationFilters(
     platform?: ConversationFilter;
     category?: CategoryFilter;
   } = {},
+  config: FilterConfig = {},
 ) {
+  const platformOptions = useMemo(
+    () =>
+      getPlatformOptions(
+        conversations,
+        config.platforms,
+      ),
+    [conversations, config.platforms],
+  );
+
   const [platform, setPlatform] =
-    useState<ConversationFilter>(
-      initial.platform ?? "all",
+    useState<ConversationFilter>(() =>
+      platformOptions.some(
+        (option) =>
+          option.slug === initial.platform,
+      )
+        ? initial.platform!
+        : "all",
     );
 
   const categoryOptions = useMemo(
-    () => getCategoryOptions(conversations),
-    [conversations],
+    () =>
+      getCategoryOptions(
+        conversations,
+        config.categories,
+      ),
+    [conversations, config.categories],
   );
 
   const [category, setCategory] =
@@ -125,6 +127,7 @@ export function useConversationFilters(
 
   return {
     categoryOptions,
+    platformOptions,
     platform,
     setPlatform,
     category,
@@ -223,6 +226,7 @@ type ConversationFiltersProps = {
     value: CategoryFilter,
   ) => number;
   categoryOptions: readonly CategoryInfo[];
+  platformOptions: readonly PlatformInfo[];
   onChange?: () => void;
 };
 
@@ -234,6 +238,7 @@ export function ConversationFilters({
   countPlatform,
   countCategory,
   categoryOptions,
+  platformOptions,
   onChange,
 }: ConversationFiltersProps) {
   const hasFilters =
@@ -253,12 +258,21 @@ export function ConversationFilters({
           );
           onChange?.();
         }}
-        options={platformOptions.map(
-          (option) => ({
-            ...option,
-            count: countPlatform(option.value),
-          }),
-        )}
+        options={[
+          {
+            value: "all",
+            label: "Todas las redes",
+            count: countPlatform("all"),
+          },
+          ...platformOptions.map((item) => ({
+            value: item.slug,
+            label:
+              item.slug === "podcast"
+                ? "Podcast (Spotify)"
+                : item.label,
+            count: countPlatform(item.slug),
+          })),
+        ]}
         value={platform}
       />
 

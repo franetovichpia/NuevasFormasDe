@@ -17,18 +17,21 @@ import type { Conversation } from "@/data/conversations";
 import {
   getArchiveHref,
   type CategoryFilter,
+  type FilterConfig,
 } from "@/lib/conversation-filters";
 
 type ConversationsArchiveProps = {
   conversations: readonly Conversation[];
   initialPlatform: ConversationFilter;
   initialCategory: CategoryFilter;
+  filterConfig?: FilterConfig;
 };
 
 export function ConversationsArchive({
   conversations,
   initialPlatform,
   initialCategory,
+  filterConfig,
 }: ConversationsArchiveProps) {
   const filters = useConversationFilters(
     conversations,
@@ -36,6 +39,7 @@ export function ConversationsArchive({
       platform: initialPlatform,
       category: initialCategory,
     },
+    filterConfig,
   );
 
   // Refleja los filtros en la dirección para poder compartirla.

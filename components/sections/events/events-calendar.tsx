@@ -3,10 +3,12 @@
 import {
   ArrowUpRight,
   CalendarClock,
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
   MapPin,
 } from "lucide-react";
+import Link from "next/link";
 import {
   useCallback,
   useMemo,
@@ -198,10 +200,16 @@ function sortEvents(
 
 type EventsCalendarProps = {
   events: readonly NfdEvent[];
+  /**
+   * Máximo de tarjetas en el listado. Si hay más, aparece
+   * "Ver más eventos", que lleva a /eventos. Sin valor, se ven todas.
+   */
+  maxVisible?: number;
 };
 
 export function EventsCalendar({
   events,
+  maxVisible,
 }: EventsCalendarProps) {
   const today = getTodayInArgentina();
 
@@ -264,6 +272,7 @@ export function EventsCalendar({
   const [modalEventId, setModalEventId] =
     useState<string | null>(null);
 
+
   const selectedEvent =
     events.find(
       (event) => event.id === selectedId,
@@ -282,6 +291,27 @@ export function EventsCalendar({
 
   const selectedIndex = datedEvents.findIndex(
     (event) => event.id === selectedEvent?.id,
+  );
+
+  // Listado: primero los próximos y después los realizados, hasta
+  // maxVisible. El resto se ve en /eventos.
+  const orderedEvents = [
+    ...upcomingEvents,
+    ...pastEvents,
+  ];
+
+  const hiddenCount =
+    maxVisible === undefined
+      ? 0
+      : Math.max(
+          orderedEvents.length - maxVisible,
+          0,
+        );
+
+  const visibleIds = new Set(
+    orderedEvents
+      .slice(0, maxVisible)
+      .map((event) => event.id),
   );
 
   const closeModal = useCallback(() => {
@@ -537,12 +567,16 @@ export function EventsCalendar({
           {[
             {
               title: "Próximos encuentros",
-              items: upcomingEvents,
+              items: upcomingEvents.filter((event) =>
+                visibleIds.has(event.id),
+              ),
               tone: "text-nfd-magenta",
             },
             {
               title: "Eventos realizados",
-              items: pastEvents,
+              items: pastEvents.filter((event) =>
+                visibleIds.has(event.id),
+              ),
               tone: "text-ink/45",
             },
           ].map((group) =>
@@ -580,6 +614,20 @@ export function EventsCalendar({
               </div>
             ) : null,
           )}
+
+          {hiddenCount > 0 ? (
+            <Link
+              className="glass-interactive inline-flex min-h-11 items-center justify-center gap-3 self-center rounded-full border border-ink/15 bg-white/55 px-5 text-[0.57rem] font-semibold uppercase tracking-[0.14em] text-ink/65 backdrop-blur-xl hover:border-nfd-blue/40 hover:text-nfd-blue"
+              href="/eventos"
+            >
+              Ver más eventos ({hiddenCount})
+              <ArrowRight
+                aria-hidden="true"
+                size={15}
+                strokeWidth={1.6}
+              />
+            </Link>
+          ) : null}
         </div>
       </div>
 

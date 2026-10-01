@@ -1,10 +1,13 @@
-export type ConversationPlatform =
-  | "instagram"
-  | "youtube"
-  | "podcast";
+/**
+ * Identificador de la red: "youtube", "instagram", "podcast" (Spotify),
+ * otra conocida (ver data/platforms.ts) o una nueva cargada desde la planilla.
+ */
+export type ConversationPlatform = string;
 
 export type ConversationMedia = {
   platform: ConversationPlatform;
+  /** Nombre para mostrar de una red nueva (las conocidas no lo necesitan). */
+  platformLabel?: string;
   image: string;
   href: string;
 };
