@@ -5,7 +5,10 @@ import {
   parseCategoryFilter,
   parsePlatformFilter,
 } from "@/lib/conversation-filters";
-import { getPublicConversations } from "@/lib/content/repository";
+import {
+  getInterviewsFilterConfig,
+  getPublicConversations,
+} from "@/lib/content/repository";
 
 export const metadata: Metadata = {
   title: "Entrevistas | Nuevas Formas De...",
@@ -21,10 +24,11 @@ export default async function InterviewsPage({
     categoria?: string | string[];
   }>;
 }) {
-  const [params, conversations] =
+  const [params, conversations, filterConfig] =
     await Promise.all([
       searchParams,
       getPublicConversations(),
+      getInterviewsFilterConfig(),
     ]);
 
   const first = (
@@ -34,6 +38,7 @@ export default async function InterviewsPage({
   return (
     <ConversationsArchive
       conversations={conversations}
+      filterConfig={filterConfig}
       initialCategory={parseCategoryFilter(
         first(params.categoria),
       )}

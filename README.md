@@ -39,6 +39,11 @@ válida redirigen al ingreso (o responden 401). Cada acción vuelve a verificar 
   5 minutos (o al instante con “Actualizar ahora”). Las fotos deben ser enlaces
   (los de Google Drive se convierten solos). Si la planilla falla, se muestra la
   última lista guardada. Categorías nuevas escritas en la planilla se suman como filtros.
+  Las entrevistas van en la primera hoja. Opcionalmente, una hoja **Configuración** con
+  las columnas `categorias` y `redes` (un valor por fila) define las opciones de los
+  filtros; las redes que no son conocidas (por ejemplo Rumble) se reconocen por el link.
+- **/eventos:** la portada muestra hasta 4 eventos junto al calendario; “Ver más
+  eventos” lleva a `/eventos`, con el calendario y la lista completa.
 - **Entrevistas por archivo:** también se pueden subir con un Excel (.xlsx) o CSV. Columnas:
   `nombre, invitado, info, descripcion, categoria, plataforma, link, foto`.
   Una entrevista puede tener varias categorías separadas por coma

@@ -152,14 +152,43 @@ export function isFixedCategory(
 }
 
 /**
- * Categorías para los filtros: primero las 9 fijas y después,
- * en orden alfabético, las nuevas que aparezcan en las entrevistas.
+ * Categorías para los filtros: primero las de la hoja "Configuración"
+ * (o las 9 fijas si no hay) y después, en orden alfabético, las que
+ * aparezcan en las entrevistas y no estén en esa lista.
  */
 export function getCategoryOptions(
   conversations: readonly {
     categories?: readonly string[];
   }[],
+  /** Lista de la hoja "Configuración"; si no hay, se usan las 9 fijas. */
+  configured?: readonly string[],
 ): CategoryInfo[] {
+  const base: CategoryInfo[] = [];
+
+  for (const value of configured ?? []) {
+    const category = resolveCategory(value);
+
+    if (
+      category &&
+      !base.some(
+        (item) => item.slug === category.slug,
+      )
+    ) {
+      base.push(category);
+    }
+  }
+
+  if (base.length === 0) {
+    base.push(
+      ...conversationCategories.map(
+        (category) => ({
+          slug: category.slug as string,
+          label: category.label as string,
+        }),
+      ),
+    );
+  }
+
   const extra = new Map<string, string>();
 
   for (const conversation of conversations) {
@@ -169,7 +198,9 @@ export function getCategoryOptions(
 
       if (
         category &&
-        !isFixedCategory(category.slug) &&
+        !base.some(
+          (item) => item.slug === category.slug,
+        ) &&
         !extra.has(category.slug)
       ) {
         extra.set(category.slug, category.label);
@@ -178,12 +209,7 @@ export function getCategoryOptions(
   }
 
   return [
-    ...conversationCategories.map(
-      (category) => ({
-        slug: category.slug as string,
-        label: category.label as string,
-      }),
-    ),
+    ...base,
     ...[...extra.entries()]
       .map(([slug, label]) => ({
         slug,

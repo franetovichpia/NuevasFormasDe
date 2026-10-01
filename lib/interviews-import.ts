@@ -7,6 +7,12 @@ import type {
   ConversationMedia,
   ConversationPlatform,
 } from "@/data/conversations";
+import {
+  detectPlatformFromLink,
+  getPlatformLabel,
+  resolvePlatformName,
+  type PlatformInfo,
+} from "@/data/platforms";
 import { slugify } from "@/lib/events";
 import { cleanText } from "@/lib/validation";
 
@@ -114,6 +120,8 @@ export type ImportRow = {
   description: string;
   categories: string[];
   platform: ConversationPlatform;
+  /** Nombre de la red, para las que no son conocidas. */
+  platformLabel?: string;
   link: string;
   /** Valor original de la columna foto. */
   photo: string;
@@ -288,68 +296,20 @@ export function cellToText(
   return cleanText(String(value), 2000);
 }
 
+/**
+ * Red de una fila: la columna "plataforma" (cualquier nombre) o,
+ * si está vacía, la que se reconozca por el link.
+ */
 export function detectPlatform(
   value: string,
-): ConversationPlatform | null {
-  const normalizedValue =
-    normalizeText(value);
-
-  if (
-    ["youtube", "yt"].includes(
-      normalizedValue,
-    )
-  ) {
-    return "youtube";
-  }
-
-  if (
-    ["instagram", "ig", "insta"].includes(
-      normalizedValue,
-    )
-  ) {
-    return "instagram";
-  }
-
-  if (
-    ["spotify", "podcast"].includes(
-      normalizedValue,
-    )
-  ) {
-    return "podcast";
-  }
-
-  let hostname: string;
-
-  try {
-    hostname = new URL(
-      value,
-    ).hostname.toLowerCase();
-  } catch {
-    return null;
-  }
-
-  if (
-    hostname.endsWith("youtube.com") ||
-    hostname === "youtu.be"
-  ) {
-    return "youtube";
-  }
-
-  if (
-    hostname.endsWith("instagram.com")
-  ) {
-    return "instagram";
-  }
-
-  if (
-    hostname.endsWith("spotify.com") ||
-    hostname === "spoti.fi" ||
-    hostname.endsWith("spotify.link")
-  ) {
-    return "podcast";
-  }
-
-  return null;
+  extraPlatforms: readonly PlatformInfo[] = [],
+): PlatformInfo | null {
+  return isHttpUrl(value)
+    ? detectPlatformFromLink(
+        value,
+        extraPlatforms,
+      )
+    : resolvePlatformName(value);
 }
 
 export function isHttpUrl(value: string) {
@@ -388,6 +348,10 @@ function splitCategories(value: string) {
 
 export function interpretSheet(
   sheet: readonly (readonly unknown[])[],
+  options: {
+    /** Redes de la hoja "Configuración", para reconocerlas por el link. */
+    platforms?: readonly PlatformInfo[];
+  } = {},
 ): {
   rows: ImportRow[];
   issues: ImportIssue[];
@@ -508,13 +472,19 @@ export function interpretSheet(
       }
 
       const platform = values.platform
-        ? detectPlatform(values.platform)
-        : detectPlatform(values.link);
+        ? detectPlatform(
+            values.platform,
+            options.platforms,
+          )
+        : detectPlatform(
+            values.link,
+            options.platforms,
+          );
 
       if (!platform) {
         rowIssues.push(
           values.platform
-            ? `plataforma "${values.platform}" desconocida (usar youtube, instagram o spotify)`
+            ? `plataforma "${values.platform}" no válida`
             : "no se pudo reconocer la red social del link; completar la columna plataforma",
         );
       }
@@ -555,7 +525,8 @@ export function interpretSheet(
         info: values.info,
         description: values.description,
         categories,
-        platform: platform!,
+        platform: platform!.slug,
+        platformLabel: platform!.label,
         link: values.link,
         photo: values.photo,
       });
@@ -705,6 +676,7 @@ export function buildConversations(
 
     upsertMedia(conversation.media, {
       platform: row.platform,
+      platformLabel: row.platformLabel,
       image: row.image,
       href: row.link,
     });
@@ -725,7 +697,7 @@ export function buildConversations(
 
         issues.push({
           rowNumber: row?.rowNumber ?? null,
-          message: `"${conversation.title}" no tiene foto para ${media.platform === "podcast" ? "Spotify" : media.platform}.`,
+          message: `"${conversation.title}" no tiene foto para ${media.platform === "podcast" ? "Spotify" : getPlatformLabel(media.platform, media.platformLabel)}.`,
         });
       }
     }
@@ -786,14 +758,16 @@ export function buildConversations(
   };
 }
 
-const platformExportLabels: Record<
-  ConversationPlatform,
-  string
-> = {
-  youtube: "youtube",
-  instagram: "instagram",
-  podcast: "spotify",
-};
+function platformExportLabel(
+  media: ConversationMedia,
+) {
+  return media.platform === "podcast"
+    ? "spotify"
+    : getPlatformLabel(
+        media.platform,
+        media.platformLabel,
+      );
+}
 
 /**
  * Filas para exportar la lista actual con el mismo formato
@@ -818,9 +792,7 @@ export function conversationsToRows(
                   ?.label ?? category,
             )
             .join(", "),
-          platformExportLabels[
-            media.platform
-          ],
+          platformExportLabel(media),
           media.href,
           media.image,
         ]),

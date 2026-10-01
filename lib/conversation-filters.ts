@@ -4,6 +4,7 @@ import type {
   ConversationPlatform,
 } from "@/data/conversations";
 
+
 /**
  * Filtros de entrevistas que se usan tanto en el servidor
  * (para leer la dirección de /entrevistas) como en el navegador.
@@ -16,24 +17,29 @@ export type ConversationFilter =
 /** "all" o el identificador (slug) de una categoría. */
 export type CategoryFilter = string;
 
-const platformValues = new Set<string>([
-  "youtube",
-  "instagram",
-  "podcast",
-]);
+/**
+ * Opciones de los filtros definidas en la hoja "Configuración"
+ * de la planilla (nombres tal como se escribieron).
+ */
+export type FilterConfig = {
+  categories?: readonly string[];
+  platforms?: readonly string[];
+};
+
+const slugPattern = /^[a-z0-9-]{1,60}$/;
 
 export function parsePlatformFilter(
   value: string | null | undefined,
 ): ConversationFilter {
-  return value && platformValues.has(value)
-    ? (value as ConversationPlatform)
+  return value && slugPattern.test(value)
+    ? value
     : "all";
 }
 
 export function parseCategoryFilter(
   value: string | null | undefined,
 ): CategoryFilter {
-  return value && /^[a-z0-9-]{1,60}$/.test(value)
+  return value && slugPattern.test(value)
     ? value
     : "all";
 }

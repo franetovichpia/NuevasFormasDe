@@ -16,7 +16,10 @@ import {
   getEventDateLabel,
   getEventStatus,
 } from "@/lib/events";
+import { resolvePlatformName } from "@/data/platforms";
+import type { FilterConfig } from "@/lib/conversation-filters";
 import {
+  fetchSheetConfig,
   fetchSheetRows,
   parseSheetUrl,
   SheetAccessError,
@@ -248,6 +251,8 @@ export const SHEET_REFRESH_SECONDS = 300;
 
 export type SheetReadResult = {
   conversations: Conversation[];
+  /** Hoja "Configuración" (categorías y redes de los filtros), si existe. */
+  config: FilterConfig | null;
   rowCount: number;
   issues: ImportIssue[];
   fetchedAt: string;
@@ -270,8 +275,24 @@ export async function readInterviewsFromSheet(
     );
   }
 
-  const sheet = await fetchSheetRows(source);
-  const { rows, issues } = interpretSheet(sheet);
+  const [sheet, config] = await Promise.all([
+    fetchSheetRows(source),
+    fetchSheetConfig(source),
+  ]);
+
+  const { rows, issues } = interpretSheet(
+    sheet,
+    {
+      // Las redes de la configuración también se reconocen por el link.
+      platforms: (config?.platforms ?? [])
+        .map((name) =>
+          resolvePlatformName(name),
+        )
+        .filter(
+          (platform) => platform !== null,
+        ),
+    },
+  );
   const allIssues: ImportIssue[] = [...issues];
   const resolvedRows: ResolvedImportRow[] = [];
 
@@ -317,6 +338,7 @@ export async function readInterviewsFromSheet(
 
   return {
     conversations,
+    config,
     rowCount: rows.length,
     issues: [...allIssues, ...built.issues],
     fetchedAt: new Date().toISOString(),
@@ -410,4 +432,16 @@ export async function getPublicConversations(): Promise<
   }
 
   return getStoredConversations();
+}
+
+/**
+ * Opciones de los filtros definidas en la hoja "Configuración" de la
+ * planilla conectada. Sin planilla (o sin esa hoja) se usan las de siempre.
+ */
+export async function getInterviewsFilterConfig(): Promise<FilterConfig> {
+  const status = await getSheetStatus();
+
+  return status.connected && status.ok
+    ? (status.result.config ?? {})
+    : {};
 }

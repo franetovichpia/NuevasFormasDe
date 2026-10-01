@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import {
   CircleAlert,
   CircleCheck,
+  Download,
   ExternalLink,
   Link2,
   LoaderCircle,
@@ -20,7 +21,10 @@ import {
   disconnectInterviewsSheet,
   refreshInterviewsSheet,
 } from "@/app/admin/actions";
+import { conversationCategories } from "@/data/categories";
 import type { SheetStatus } from "@/lib/content/repository";
+import type { FilterConfig } from "@/lib/conversation-filters";
+import { toCsv } from "@/lib/interviews-import";
 
 type SheetConnectionProps = {
   status: SheetStatus;
@@ -36,6 +40,95 @@ function formatTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+/**
+ * Plantilla de la hoja "Configuración": las 9 categorías y las 3 redes
+ * actuales, para importarla como una hoja nueva de la planilla.
+ */
+function downloadConfigTemplate() {
+  const categories = conversationCategories.map(
+    (category) => category.label as string,
+  );
+
+  const platforms = [
+    "YouTube",
+    "Instagram",
+    "Spotify",
+  ];
+
+  const rows = [
+    ["categorias", "redes"],
+    ...Array.from(
+      {
+        length: Math.max(
+          categories.length,
+          platforms.length,
+        ),
+      },
+      (_, index) => [
+        categories[index] ?? "",
+        platforms[index] ?? "",
+      ],
+    ),
+  ];
+
+  const blob = new Blob([toCsv(rows)], {
+    type: "text/csv;charset=utf-8",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "configuracion.csv";
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function ConfigSummary({
+  config,
+}: {
+  config: FilterConfig | null;
+}) {
+  if (!config) {
+    return (
+      <p className="text-sm text-ink/55">
+        <strong>Hoja “Configuración”:</strong> no se encontró
+        (es opcional). Los filtros usan las 9 categorías y las
+        redes de siempre, más las que aparezcan en las
+        entrevistas.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5 text-sm text-ink/65">
+      <p>
+        <strong>Hoja “Configuración”:</strong> leída. Opciones de
+        los filtros del sitio:
+      </p>
+
+      {config.categories ? (
+        <p>
+          <span className="text-ink/45">
+            Categorías ({config.categories.length}):
+          </span>{" "}
+          {config.categories.join(", ")}
+        </p>
+      ) : null}
+
+      {config.platforms ? (
+        <p>
+          <span className="text-ink/45">
+            Redes ({config.platforms.length}):
+          </span>{" "}
+          {config.platforms.join(", ")}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -158,6 +251,12 @@ export function SheetConnection({
                 {formatTime(status.result.fetchedAt)}
               </time>
             </p>
+          ) : null}
+
+          {status.ok ? (
+            <ConfigSummary
+              config={status.result.config}
+            />
           ) : (
             <p className="flex items-start gap-2 rounded-xl bg-nfd-coral/10 px-4 py-3 text-sm text-nfd-coral">
               <CircleAlert
@@ -268,10 +367,30 @@ export function SheetConnection({
               o de cualquier imagen publicada.
             </li>
             <li>
-              Copiá el enlace de la planilla y pegalo acá. Las
-              filas de arriba se muestran primero.
+              Opcional: agregá una hoja llamada{" "}
+              <strong>Configuración</strong> con las columnas{" "}
+              <strong>categorias</strong> y <strong>redes</strong>{" "}
+              (un valor por fila). Esas listas son las opciones de
+              los filtros del sitio.
+            </li>
+            <li>
+              Dejá las entrevistas en la <strong>primera hoja</strong>,
+              copiá el enlace de la planilla y pegalo acá. Las filas
+              de arriba se muestran primero.
             </li>
           </ol>
+
+          <button
+            className="admin-button-secondary"
+            onClick={downloadConfigTemplate}
+            type="button"
+          >
+            <Download
+              aria-hidden="true"
+              size={15}
+            />
+            Descargar hoja de configuración
+          </button>
 
           <form
             className="flex flex-col gap-2 sm:flex-row"

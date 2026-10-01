@@ -3,6 +3,9 @@ import { EventsCalendar } from "@/components/sections/events/events-calendar";
 import { Container } from "@/components/ui/container";
 import type { NfdEvent } from "@/data/events";
 
+// Eventos que se ven en la portada; el resto, en /eventos.
+const HOME_VISIBLE_EVENTS = 4;
+
 type EventsSectionProps = {
   events: readonly NfdEvent[];
 };
@@ -74,7 +77,10 @@ export function EventsSection({
           </div>
         </div>
 
-        <EventsCalendar events={events} />
+        <EventsCalendar
+          events={events}
+          maxVisible={HOME_VISIBLE_EVENTS}
+        />
       </Container>
     </section>
   );

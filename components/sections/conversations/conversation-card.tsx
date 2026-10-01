@@ -1,18 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
 import {
+  ArrowUpRight,
+  Link2,
+} from "lucide-react";
+import {
+  FaFacebook,
   FaInstagram,
   FaSpotify,
+  FaTiktok,
+  FaTwitch,
+  FaVimeoV,
   FaYoutube,
 } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 import type {
   Conversation,
   ConversationMedia,
   ConversationPlatform,
 } from "@/data/conversations";
+import { getPlatformLabel } from "@/data/platforms";
 import { cn } from "@/utils/cn";
 import { shouldOptimizeImage } from "@/utils/image";
 
@@ -25,58 +34,168 @@ type ConversationCardProps = {
   activeFilter: ConversationFilter;
 };
 
-export const platformLabels: Record<
-  ConversationPlatform,
-  string
-> = {
-  instagram: "Instagram",
-  youtube: "YouTube",
-  podcast: "Podcast",
+type PlatformStyle = {
+  badge: string;
+  action: string;
+  /** Formato de la imagen: "video" (16:9), "portrait" (4:5) o "square". */
+  shape: "video" | "portrait" | "square";
 };
 
-const platformBadgeClasses: Record<
-  ConversationPlatform,
-  string
+function toneStyle(
+  text: string,
+  border: string,
+  soft: string,
+  solid: string,
+): Pick<PlatformStyle, "badge" | "action"> {
+  return {
+    badge: `${border} bg-[#faf7ef]/90 ${text}`,
+    action: `${border} ${soft} ${text} hover:text-white ${solid}`,
+  };
+}
+
+const platformStyles: Record<
+  string,
+  PlatformStyle
 > = {
-  instagram:
-    "border-nfd-magenta/30 bg-[#faf7ef]/90 text-nfd-magenta",
-  youtube:
-    "border-nfd-coral/30 bg-[#faf7ef]/90 text-nfd-coral",
-  podcast:
-    "border-[#d9a91b]/40 bg-[#fff5ba]/90 text-[#725000]",
+  instagram: {
+    ...toneStyle(
+      "text-nfd-magenta",
+      "border-nfd-magenta/25",
+      "bg-nfd-magenta/10",
+      "hover:border-nfd-magenta hover:bg-nfd-magenta",
+    ),
+    shape: "portrait",
+  },
+  youtube: {
+    ...toneStyle(
+      "text-nfd-coral",
+      "border-nfd-coral/25",
+      "bg-nfd-coral/10",
+      "hover:border-nfd-coral hover:bg-nfd-coral",
+    ),
+    shape: "video",
+  },
+  podcast: {
+    badge:
+      "border-[#d9a91b]/40 bg-[#fff5ba]/90 text-[#725000]",
+    action:
+      "border-[#d9a91b]/30 bg-[#fff1a8]/70 text-[#725000] hover:border-[#d9a91b] hover:bg-[#d9a91b] hover:text-white",
+    shape: "square",
+  },
+  tiktok: {
+    ...toneStyle(
+      "text-ink",
+      "border-ink/20",
+      "bg-ink/5",
+      "hover:border-ink hover:bg-ink",
+    ),
+    shape: "portrait",
+  },
+  facebook: {
+    ...toneStyle(
+      "text-[#1877f2]",
+      "border-[#1877f2]/25",
+      "bg-[#1877f2]/10",
+      "hover:border-[#1877f2] hover:bg-[#1877f2]",
+    ),
+    shape: "square",
+  },
+  x: {
+    ...toneStyle(
+      "text-ink",
+      "border-ink/20",
+      "bg-ink/5",
+      "hover:border-ink hover:bg-ink",
+    ),
+    shape: "square",
+  },
+  twitch: {
+    ...toneStyle(
+      "text-[#9146ff]",
+      "border-[#9146ff]/25",
+      "bg-[#9146ff]/10",
+      "hover:border-[#9146ff] hover:bg-[#9146ff]",
+    ),
+    shape: "video",
+  },
+  vimeo: {
+    ...toneStyle(
+      "text-nfd-cyan",
+      "border-nfd-cyan/25",
+      "bg-nfd-cyan/10",
+      "hover:border-nfd-cyan hover:bg-nfd-cyan",
+    ),
+    shape: "video",
+  },
 };
 
-const platformActionClasses: Record<
-  ConversationPlatform,
-  string
-> = {
-  instagram:
-    "border-nfd-magenta/20 bg-nfd-magenta/10 text-nfd-magenta hover:border-nfd-magenta hover:bg-nfd-magenta hover:text-white",
-  youtube:
-    "border-nfd-coral/20 bg-nfd-coral/10 text-nfd-coral hover:border-nfd-coral hover:bg-nfd-coral hover:text-white",
-  podcast:
-    "border-[#d9a91b]/30 bg-[#fff1a8]/70 text-[#725000] hover:border-[#d9a91b] hover:bg-[#d9a91b] hover:text-white",
+// Redes nuevas cargadas desde la planilla.
+const genericStyle: PlatformStyle = {
+  ...toneStyle(
+    "text-nfd-blue",
+    "border-nfd-blue/25",
+    "bg-nfd-blue/10",
+    "hover:border-nfd-blue hover:bg-nfd-blue",
+  ),
+  shape: "square",
 };
 
-const platformImageClasses: Record<
-  ConversationPlatform,
-  string
-> = {
-  instagram: "aspect-[4/5]",
-  youtube: "aspect-video",
-  podcast: "aspect-square",
-};
+function getStyle(
+  platform: ConversationPlatform,
+) {
+  return (
+    platformStyles[platform] ?? genericStyle
+  );
+}
 
-export const platformRailWidthClasses: Record<
-  ConversationPlatform,
-  string
-> = {
-  instagram:
-    "w-[76vw] max-w-[20rem] sm:w-[19rem]",
-  youtube:
+const shapeImageClasses = {
+  video: "aspect-video",
+  portrait: "aspect-[4/5]",
+  square: "aspect-square",
+} as const;
+
+const shapeRailClasses = {
+  video:
     "w-[88vw] max-w-[32rem] sm:w-[30rem]",
-  podcast:
+  portrait:
     "w-[76vw] max-w-[20rem] sm:w-[19rem]",
+  square:
+    "w-[76vw] max-w-[20rem] sm:w-[19rem]",
+} as const;
+
+/** Ancho de la tarjeta en el carrusel según el formato de la red. */
+export function getRailWidthClass(
+  platform: ConversationPlatform,
+) {
+  return shapeRailClasses[
+    getStyle(platform).shape
+  ];
+}
+
+function mediaLabel(
+  media: Pick<
+    ConversationMedia,
+    "platform" | "platformLabel"
+  >,
+) {
+  return getPlatformLabel(
+    media.platform,
+    media.platformLabel,
+  );
+}
+
+const platformIcons: Record<
+  string,
+  typeof FaYoutube
+> = {
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  podcast: FaSpotify,
+  tiktok: FaTiktok,
+  facebook: FaFacebook,
+  x: FaXTwitter,
+  twitch: FaTwitch,
+  vimeo: FaVimeoV,
 };
 
 function PlatformIcon({
@@ -84,28 +203,22 @@ function PlatformIcon({
 }: {
   platform: ConversationPlatform;
 }) {
-  if (platform === "instagram") {
+  const Icon = platformIcons[platform];
+
+  if (!Icon) {
     return (
-      <FaInstagram
+      <Link2
         aria-hidden="true"
         size={15}
-      />
-    );
-  }
-
-  if (platform === "youtube") {
-    return (
-      <FaYoutube
-        aria-hidden="true"
-        size={16}
+        strokeWidth={1.8}
       />
     );
   }
 
   return (
-    <FaSpotify
+    <Icon
       aria-hidden="true"
-      size={15}
+      size={platform === "youtube" ? 16 : 15}
     />
   );
 }
@@ -159,16 +272,19 @@ export function ConversationCard({
       <div
         className={cn(
           "relative w-full overflow-hidden",
-          platformImageClasses[cover.platform],
+          shapeImageClasses[
+            getStyle(cover.platform).shape
+          ],
         )}
       >
         <Image
-          alt={`${conversation.title} — ${platformLabels[cover.platform]}`}
+          alt={`${conversation.title} — ${mediaLabel(cover)}`}
           className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
           fill
           loading="lazy"
           sizes={
-            cover.platform === "youtube"
+            getStyle(cover.platform).shape ===
+            "video"
               ? "(max-width: 768px) 88vw, 32rem"
               : "(max-width: 768px) 76vw, 20rem"
           }
@@ -191,16 +307,14 @@ export function ConversationCard({
           <span
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[0.5rem] font-semibold uppercase tracking-[0.13em] shadow-sm backdrop-blur-xl",
-              platformBadgeClasses[
-                cover.platform
-              ],
+              getStyle(cover.platform).badge,
             )}
           >
             <PlatformIcon
               platform={cover.platform}
             />
 
-            {platformLabels[cover.platform]}
+            {mediaLabel(cover)}
           </span>
         </div>
 
@@ -217,9 +331,7 @@ export function ConversationCard({
             <div className="min-w-0 flex-1">
               <p className="text-[0.47rem] font-semibold uppercase tracking-[0.15em] text-nfd-blue/70">
                 {conversation.date ??
-                  platformLabels[
-                    cover.platform
-                  ]}
+                  mediaLabel(cover)}
               </p>
 
               <h3 className="mt-1.5 line-clamp-2 font-sans text-[0.95rem] font-semibold leading-tight tracking-[-0.025em] text-ink sm:text-base">
@@ -244,18 +356,16 @@ export function ConversationCard({
               {conversation.media.map(
                 (media, mediaIndex) => (
                   <a
-                    aria-label={`Abrir ${conversation.title} en ${platformLabels[media.platform]}`}
+                    aria-label={`Abrir ${conversation.title} en ${mediaLabel(media)}`}
                     className={cn(
                       "grid size-8 place-items-center rounded-full border transition-all duration-300",
-                      platformActionClasses[
-                        media.platform
-                      ],
+                      getStyle(media.platform).action,
                     )}
                     href={media.href}
                     key={`${conversation.slug}-${media.platform}-${mediaIndex}`}
                     rel="noreferrer"
                     target="_blank"
-                    title={`Abrir en ${platformLabels[media.platform]}`}
+                    title={`Abrir en ${mediaLabel(media)}`}
                   >
                     <PlatformIcon
                       platform={

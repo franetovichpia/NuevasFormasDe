@@ -179,3 +179,30 @@ test.describe("Calendario de eventos", () => {
     await expect(dialog).toHaveCount(0);
   });
 });
+
+test("/eventos muestra todos los eventos y la flecha para volver", async ({
+  page,
+}) => {
+  await page.goto("/eventos", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(
+    page.getByRole("heading", {
+      name: "Todos los eventos.",
+    }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole("link", {
+      name: "Volver",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", "/#eventos");
+
+  await expect(
+    page.getByRole("button", {
+      name: /Primera Convención/,
+    }).first(),
+  ).toBeVisible();
+});

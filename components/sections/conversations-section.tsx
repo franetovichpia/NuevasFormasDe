@@ -12,7 +12,7 @@ import { Reveal } from "@/components/motion/reveal";
 import {
   ConversationCard,
   getPreferredMedia,
-  platformRailWidthClasses,
+  getRailWidthClass,
 } from "@/components/sections/conversations/conversation-card";
 import {
   ConversationFilters,
@@ -20,23 +20,32 @@ import {
 } from "@/components/sections/conversations/conversation-filters";
 import { Container } from "@/components/ui/container";
 import type { Conversation } from "@/data/conversations";
-import { getArchiveHref } from "@/lib/conversation-filters";
+import {
+  getArchiveHref,
+  type FilterConfig,
+} from "@/lib/conversation-filters";
 import { cn } from "@/utils/cn";
 
 const FEATURED_COUNT = 6;
 
 type ConversationsSectionProps = {
   conversations: readonly Conversation[];
+  /** Categorías y redes de la hoja "Configuración" de la planilla. */
+  filterConfig?: FilterConfig;
 };
 
 export function ConversationsSection({
   conversations,
+  filterConfig,
 }: ConversationsSectionProps) {
   const carouselRef =
     useRef<HTMLDivElement>(null);
 
-  const filters =
-    useConversationFilters(conversations);
+  const filters = useConversationFilters(
+    conversations,
+    {},
+    filterConfig,
+  );
 
   const featuredConversations =
     filters.filtered.slice(0, FEATURED_COUNT);
@@ -211,9 +220,9 @@ export function ConversationsSection({
                 <Reveal
                   className={cn(
                     "shrink-0 snap-start",
-                    platformRailWidthClasses[
-                      cover.platform
-                    ],
+                    getRailWidthClass(
+                      cover.platform,
+                    ),
                   )}
                   delay={Math.min(
                     0.04 + index * 0.04,
