@@ -3,8 +3,10 @@
 import {
   ArrowUpRight,
   CalendarClock,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   MapPin,
 } from "lucide-react";
 import {
@@ -50,6 +52,9 @@ const shortMonthNames = [
   "nov",
   "dic",
 ];
+
+// Cantidad de eventos que se ven en el listado antes de "Ver más".
+const MAX_VISIBLE_EVENTS = 4;
 
 // La semana empieza el lunes.
 const weekDays = ["L", "M", "M", "J", "V", "S", "D"];
@@ -264,6 +269,9 @@ export function EventsCalendar({
   const [modalEventId, setModalEventId] =
     useState<string | null>(null);
 
+  const [isListExpanded, setIsListExpanded] =
+    useState(false);
+
   const selectedEvent =
     events.find(
       (event) => event.id === selectedId,
@@ -282,6 +290,35 @@ export function EventsCalendar({
 
   const selectedIndex = datedEvents.findIndex(
     (event) => event.id === selectedEvent?.id,
+  );
+
+  // Listado: primero los próximos y después los realizados, hasta
+  // MAX_VISIBLE_EVENTS. Si se elige con las flechas un evento que quedó
+  // oculto, el listado se despliega para mostrarlo.
+  const orderedEvents = [
+    ...upcomingEvents,
+    ...pastEvents,
+  ];
+
+  const hiddenCount = Math.max(
+    orderedEvents.length - MAX_VISIBLE_EVENTS,
+    0,
+  );
+
+  const showAllEvents =
+    isListExpanded ||
+    orderedEvents.findIndex(
+      (event) => event.id === selectedEvent?.id,
+    ) >= MAX_VISIBLE_EVENTS;
+
+  const visibleIds = new Set(
+    (showAllEvents
+      ? orderedEvents
+      : orderedEvents.slice(
+          0,
+          MAX_VISIBLE_EVENTS,
+        )
+    ).map((event) => event.id),
   );
 
   const closeModal = useCallback(() => {
@@ -537,12 +574,16 @@ export function EventsCalendar({
           {[
             {
               title: "Próximos encuentros",
-              items: upcomingEvents,
+              items: upcomingEvents.filter((event) =>
+                visibleIds.has(event.id),
+              ),
               tone: "text-nfd-magenta",
             },
             {
               title: "Eventos realizados",
-              items: pastEvents,
+              items: pastEvents.filter((event) =>
+                visibleIds.has(event.id),
+              ),
               tone: "text-ink/45",
             },
           ].map((group) =>
@@ -580,6 +621,64 @@ export function EventsCalendar({
               </div>
             ) : null,
           )}
+
+          {hiddenCount > 0 ? (
+            <button
+              aria-expanded={showAllEvents}
+              className="glass-interactive inline-flex min-h-11 items-center justify-center gap-3 self-center rounded-full border border-ink/15 bg-white/55 px-5 text-[0.57rem] font-semibold uppercase tracking-[0.14em] text-ink/65 backdrop-blur-xl hover:border-nfd-blue/40 hover:text-nfd-blue"
+              onClick={() => {
+                if (showAllEvents) {
+                  setIsListExpanded(false);
+
+                  // Al contraer, vuelve a un evento que siga visible.
+                  if (
+                    orderedEvents.findIndex(
+                      (event) =>
+                        event.id ===
+                        selectedEvent?.id,
+                    ) >= MAX_VISIBLE_EVENTS
+                  ) {
+                    const defaultIndex =
+                      orderedEvents.findIndex(
+                        (event) =>
+                          event.id ===
+                          defaultEvent?.id,
+                      );
+
+                    setSelectedId(
+                      defaultIndex >= 0 &&
+                        defaultIndex <
+                          MAX_VISIBLE_EVENTS
+                        ? defaultEvent!.id
+                        : (orderedEvents[0]?.id ??
+                            null),
+                    );
+                  }
+                } else {
+                  setIsListExpanded(true);
+                }
+              }}
+              type="button"
+            >
+              {showAllEvents
+                ? "Ver menos"
+                : `Ver más eventos (${hiddenCount})`}
+
+              {showAllEvents ? (
+                <ChevronUp
+                  aria-hidden="true"
+                  size={15}
+                  strokeWidth={1.6}
+                />
+              ) : (
+                <ChevronDown
+                  aria-hidden="true"
+                  size={15}
+                  strokeWidth={1.6}
+                />
+              )}
+            </button>
+          ) : null}
         </div>
       </div>
 
