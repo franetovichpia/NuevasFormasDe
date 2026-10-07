@@ -88,6 +88,35 @@ function getSessionSecret() {
   return secret;
 }
 
+/**
+ * Qué falta configurar en el servidor (solo nombres de variables,
+ * nunca valores). Lista vacía = acceso configurado.
+ */
+export function getAuthConfigProblems() {
+  const problems: string[] = [];
+  const secret =
+    process.env.NFD_SESSION_SECRET;
+
+  if (!secret) {
+    problems.push("Falta NFD_SESSION_SECRET.");
+  } else if (secret.length < 32) {
+    problems.push(
+      `NFD_SESSION_SECRET es muy corta (${secret.length} caracteres; tiene que tener al menos 32).`,
+    );
+  }
+
+  if (
+    !process.env.NFD_ADMIN_PASSWORD &&
+    !process.env.NFD_EDITOR_PASSWORD
+  ) {
+    problems.push(
+      "Falta NFD_ADMIN_PASSWORD (y NFD_EDITOR_PASSWORD).",
+    );
+  }
+
+  return problems;
+}
+
 export function isAuthConfigured() {
   return (
     getSessionSecret() !== null &&
