@@ -254,10 +254,9 @@ export function SiteHeader() {
                 </ul>
 
                 <div className="mt-5 flex flex-col gap-3 border-t border-ink/10 pt-5">
-                  <LoginModalButton
-                    className="flex w-full justify-center"
-                    onOpen={closeMenu}
-                  />
+                  {/* El menú queda abierto debajo del modal: si se
+                      cerrara, se llevaría el modal con él. */}
+                  <LoginModalButton className="flex w-full justify-center" />
 
                   <Link
                     className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full bg-nfd-blue px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-white"

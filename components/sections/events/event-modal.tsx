@@ -110,7 +110,7 @@ export function EventModal({
       <article
         aria-labelledby="event-modal-title"
         aria-modal="true"
-        className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.6rem] bg-surface text-ink shadow-[0_2rem_5rem_rgb(15_42_55/0.35)] sm:rounded-[1.6rem]"
+        className="relative flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.6rem] bg-surface text-ink shadow-[0_2rem_5rem_rgb(15_42_55/0.35)] sm:rounded-[1.6rem]"
         role="dialog"
       >
         {/* Portada */}
@@ -181,7 +181,7 @@ export function EventModal({
         </div>
 
         {/* Información */}
-        <div className="overflow-y-auto p-6 sm:p-8">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 sm:p-8">
           <h2
             className="font-sans text-[1.6rem] font-semibold leading-tight tracking-[-0.04em] sm:text-[1.9rem]"
             id="event-modal-title"
@@ -249,6 +249,21 @@ export function EventModal({
               />
             </div>
           ) : null}
+        </div>
+
+        {/* Siempre visible abajo, también en celulares. */}
+        <div className="shrink-0 border-t border-ink/10 bg-surface px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8">
+          <button
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-ink/15 bg-white text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-ink/70 transition-colors hover:border-nfd-blue/40 hover:text-nfd-blue"
+            onClick={onClose}
+            type="button"
+          >
+            <X
+              aria-hidden="true"
+              size={15}
+            />
+            Cerrar
+          </button>
         </div>
       </article>
     </div>,
