@@ -5,8 +5,8 @@ import { ArrowLeft } from "lucide-react";
 
 import { LoginForm } from "@/components/admin/login-form";
 import {
+  getAuthConfigProblems,
   getSession,
-  isAuthConfigured,
 } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,9 @@ export default async function LoginPage() {
   if (await getSession()) {
     redirect("/admin");
   }
+
+  const configProblems =
+    getAuthConfigProblems();
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-12">
@@ -49,14 +52,28 @@ export default async function LoginPage() {
             entrevistas.
           </p>
 
-          {isAuthConfigured() ? (
+          {configProblems.length === 0 ? (
             <LoginForm />
           ) : (
-            <p className="mt-6 rounded-xl border border-nfd-coral/30 bg-nfd-coral/10 p-4 text-sm text-nfd-coral">
-              El acceso todavía no está configurado. Hay que definir
-              las variables NFD_SESSION_SECRET, NFD_ADMIN_PASSWORD y
-              NFD_EDITOR_PASSWORD en el servidor.
-            </p>
+            <div className="mt-6 rounded-xl border border-nfd-coral/30 bg-nfd-coral/10 p-4 text-sm text-nfd-coral">
+              <p className="font-semibold">
+                El acceso todavía no está configurado en este
+                servidor:
+              </p>
+
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {configProblems.map((problem) => (
+                  <li key={problem}>{problem}</li>
+                ))}
+              </ul>
+
+              <p className="mt-3 text-ink/60">
+                En Vercel se cargan en Settings → Environment
+                Variables (marcando el entorno que estás usando) y
+                después hay que volver a publicar. En tu computadora,
+                en el archivo .env.local, y reiniciar npm run dev.
+              </p>
+            </div>
           )}
         </div>
       </div>

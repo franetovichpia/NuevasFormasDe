@@ -10,6 +10,7 @@ import {
 
 export {
   createSessionToken,
+  getAuthConfigProblems,
   isAuthConfigured,
   SESSION_COOKIE,
   verifyCredentials,
