@@ -44,15 +44,22 @@ export function EventsSection({
           <div className="lg:col-span-7">
             <Reveal>
               <p className="text-[0.59rem] font-semibold uppercase tracking-[0.19em] text-nfd-magenta">
-                Agenda y archivo
+                Te invitamos
               </p>
 
               <h2
                 className="mt-4 font-sans text-[clamp(2.4rem,4vw,4.5rem)] font-semibold leading-[0.92] tracking-[-0.055em] text-ink"
                 id="events-heading"
               >
-                Eventos.
+                Sumate a un encuentro.
               </h2>
+
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-ink/60">
+                Elegí una fecha en el calendario y conocé cada
+                actividad: qué proponemos, dónde y cuándo. Vení a
+                compartir, aprender y conSOLidar JUNTOS lo que sí
+                queremos.
+              </p>
             </Reveal>
           </div>
 

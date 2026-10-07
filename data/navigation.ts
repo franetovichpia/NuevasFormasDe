@@ -11,6 +11,10 @@ export const mainNavigation: readonly NavigationItem[] = [
     href: "/#inicio",
   },
   {
+    label: "Equipo",
+    href: "/#quienes-participan",
+  },
+  {
     label: "Eventos",
     href: "/#eventos",
   },
@@ -21,10 +25,6 @@ export const mainNavigation: readonly NavigationItem[] = [
   {
     label: "Entrevistas",
     href: "/#conversaciones",
-  },
-  {
-    label: "Equipo",
-    href: "/#quienes-participan",
   },
   {
     label: "Nexo Azul",

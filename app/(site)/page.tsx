@@ -28,28 +28,29 @@ export default async function HomePage() {
 
   return (
     <main>
-      {/* 1. Qué pasa ahora: eventos y de qué se trata */}
+      {/* 1. Portada */}
       <HeroSection />
 
-      <EventsSection events={events} />
-
-      <ProposalSection />
-
-      {/* 2. Qué hacemos */}
-      <ActivitiesSection />
-
-      <ConversationsSection
-        conversations={conversations}
-        filterConfig={filterConfig}
-      />
-
-      {/* 3. Quiénes somos y lo que nos guía */}
+      {/* 2. Quiénes somos */}
       <div
         className="scroll-mt-28"
         id="quienes-participan"
       >
         <ParticipantsSection />
       </div>
+
+      {/* 3. Invitación a participar: calendario de eventos */}
+      <EventsSection events={events} />
+
+      <ActivitiesSection />
+
+      {/* 4. De qué se trata, entrevistas y lo que nos guía */}
+      <ProposalSection />
+
+      <ConversationsSection
+        conversations={conversations}
+        filterConfig={filterConfig}
+      />
 
       <ValuesSection />
 
