@@ -39,23 +39,32 @@ type Account = {
   role: AdminRole;
 };
 
+/**
+ * Lee una variable de entorno sin espacios ni saltos de línea en los
+ * extremos (suelen colarse al pegar el valor en Vercel). Vacía = sin valor.
+ */
+function readEnv(name: string) {
+  const value = process.env[name]?.trim();
+
+  return value ? value : undefined;
+}
+
 function getAccounts(): Account[] {
   const accounts: Account[] = [];
 
-  const adminPassword =
-    process.env.NFD_ADMIN_PASSWORD;
+  const adminPassword = readEnv(
+    "NFD_ADMIN_PASSWORD",
+  );
 
-  const editorPassword =
-    process.env.NFD_EDITOR_PASSWORD;
+  const editorPassword = readEnv(
+    "NFD_EDITOR_PASSWORD",
+  );
 
   if (adminPassword) {
     accounts.push({
       username: (
-        process.env.NFD_ADMIN_USER ??
-        "admin"
-      )
-        .trim()
-        .toLowerCase(),
+        readEnv("NFD_ADMIN_USER") ?? "admin"
+      ).toLowerCase(),
       password: adminPassword,
       role: "admin",
     });
@@ -64,11 +73,9 @@ function getAccounts(): Account[] {
   if (editorPassword) {
     accounts.push({
       username: (
-        process.env.NFD_EDITOR_USER ??
+        readEnv("NFD_EDITOR_USER") ??
         "emiliano"
-      )
-        .trim()
-        .toLowerCase(),
+      ).toLowerCase(),
       password: editorPassword,
       role: "editor",
     });
@@ -77,9 +84,55 @@ function getAccounts(): Account[] {
   return accounts;
 }
 
+export type AccountStatus = {
+  role: AdminRole;
+  /** Usuario para ingresar (o el que tendría si estuviera configurada). */
+  username: string;
+  configured: boolean;
+  /** Variable que falta cargar, si la cuenta no está activa. */
+  missing?: string;
+};
+
+/**
+ * Estado de las dos cuentas, sin contraseñas, para mostrar en el panel.
+ */
+export function getAccountStatuses(): AccountStatus[] {
+  const accounts = getAccounts();
+
+  return (
+    [
+      [
+        "admin",
+        readEnv("NFD_ADMIN_USER") ?? "admin",
+        "NFD_ADMIN_PASSWORD",
+      ],
+      [
+        "editor",
+        readEnv("NFD_EDITOR_USER") ??
+          "emiliano",
+        "NFD_EDITOR_PASSWORD",
+      ],
+    ] as const
+  ).map(([role, username, passwordVariable]) => {
+    const configured = accounts.some(
+      (account) => account.role === role,
+    );
+
+    return {
+      role,
+      username: username.toLowerCase(),
+      configured,
+      missing: configured
+        ? undefined
+        : passwordVariable,
+    };
+  });
+}
+
 function getSessionSecret() {
-  const secret =
-    process.env.NFD_SESSION_SECRET;
+  const secret = readEnv(
+    "NFD_SESSION_SECRET",
+  );
 
   if (!secret || secret.length < 32) {
     return null;
@@ -94,8 +147,9 @@ function getSessionSecret() {
  */
 export function getAuthConfigProblems() {
   const problems: string[] = [];
-  const secret =
-    process.env.NFD_SESSION_SECRET;
+  const secret = readEnv(
+    "NFD_SESSION_SECRET",
+  );
 
   if (!secret) {
     problems.push("Falta NFD_SESSION_SECRET.");
@@ -106,8 +160,8 @@ export function getAuthConfigProblems() {
   }
 
   if (
-    !process.env.NFD_ADMIN_PASSWORD &&
-    !process.env.NFD_EDITOR_PASSWORD
+    !readEnv("NFD_ADMIN_PASSWORD") &&
+    !readEnv("NFD_EDITOR_PASSWORD")
   ) {
     problems.push(
       "Falta NFD_ADMIN_PASSWORD (y NFD_EDITOR_PASSWORD).",

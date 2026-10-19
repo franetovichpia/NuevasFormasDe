@@ -10,10 +10,12 @@ import {
 
 export {
   createSessionToken,
+  getAccountStatuses,
   getAuthConfigProblems,
   isAuthConfigured,
   SESSION_COOKIE,
   verifyCredentials,
+  type AccountStatus,
   type AdminRole,
   type AdminSession,
 } from "@/lib/session-token";

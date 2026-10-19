@@ -1,20 +1,34 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  CircleAlert,
+  CircleCheck,
   Mic,
 } from "lucide-react";
 
+import {
+  getAccountStatuses,
+  requireSession,
+  roleLabels,
+} from "@/lib/auth";
 import {
   getCachedAllEvents,
   getPublicConversations,
 } from "@/lib/content/repository";
 
 export default async function AdminHomePage() {
-  const [events, conversations] =
+  const [session, events, conversations] =
     await Promise.all([
+      requireSession(),
       getCachedAllEvents(),
       getPublicConversations(),
     ]);
+
+  // Solo la cuenta de administración ve el estado de las cuentas.
+  const accounts =
+    session.role === "admin"
+      ? getAccountStatuses()
+      : [];
 
   const count = (
     visibility: string,
@@ -88,6 +102,64 @@ export default async function AdminHomePage() {
           </p>
         </Link>
       </div>
+      {accounts.length > 0 ? (
+        <section className="admin-card mt-6">
+          <h2 className="text-lg font-semibold tracking-[-0.02em]">
+            Cuentas del panel
+          </h2>
+
+          <ul className="mt-4 space-y-2 text-sm">
+            {accounts.map((account) => (
+              <li
+                className="flex items-start gap-2"
+                key={account.role}
+              >
+                {account.configured ? (
+                  <CircleCheck
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-emerald-600"
+                    size={16}
+                  />
+                ) : (
+                  <CircleAlert
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-nfd-coral"
+                    size={16}
+                  />
+                )}
+
+                <span>
+                  <strong>{roleLabels[account.role]}</strong>
+                  {account.configured ? (
+                    <>
+                      : activa, ingresa con el usuario{" "}
+                      <code className="rounded bg-ink/5 px-1.5 py-0.5">
+                        {account.username}
+                      </code>
+                      .
+                    </>
+                  ) : (
+                    <>
+                      : no está activa. Falta cargar{" "}
+                      <code className="rounded bg-ink/5 px-1.5 py-0.5">
+                        {account.missing}
+                      </code>{" "}
+                      en Vercel (y volver a publicar).
+                    </>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="admin-hint">
+            Las contraseñas no se muestran nunca. Si alguien no puede
+            entrar con su usuario, cargá de nuevo su contraseña en
+            Vercel → Settings → Environment Variables y volvé a
+            publicar.
+          </p>
+        </section>
+      ) : null}
     </>
   );
 }
